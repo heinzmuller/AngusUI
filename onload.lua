@@ -2,9 +2,15 @@ local _, angusui = ...
 
 local frame=CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
+frame:RegisterEvent("QUEST_ACCEPTED")
 
 SLASH_ANGUSUI1, SLASH_ANGUSUI2 = '/angusui', '/aui'; -- 3.
 	function SlashCmdList.ANGUSUI(msg, editbox) -- 4.
+
+	frame:followerUpgrades()
+end
+
+function frame:followerUpgrades()
 	local weapons = {};
 	local armor = {};
 	local upgrades = {};
@@ -28,29 +34,66 @@ SLASH_ANGUSUI1, SLASH_ANGUSUI2 = '/angusui', '/aui'; -- 3.
 	   upgrades["armor"] = upgrades["armor"] + (((bag or 0) + (bank or 0)) * value)
 	end
 
-	print( "Weapon: " .. upgrades["weapon"] );
-	print( "Armor: " .. upgrades["armor"] );
+	if(upgrades["weapon"] < upgrades["armor"]) then
+		print( "|cff00ff00Weapon: " .. upgrades["weapon"] .. "|r");
+		print( "Armor: " .. upgrades["armor"] );
+	else
+		print( "Weapon: " .. upgrades["weapon"]);
+		print( "|cff00ff00Armor: " .. upgrades["armor"] .. "|r");
+	end
 end
 
-frame:SetScript("OnEvent", function(self, event, addon)
-        if (addon == "Blizzard_TimeManager") then
-                for i, v in pairs({PlayerFrameTexture, TargetFrameTextureFrameTexture, PetFrameTexture, PartyMemberFrame1Texture, PartyMemberFrame2Texture, PartyMemberFrame3Texture, PartyMemberFrame4Texture,
-                        PartyMemberFrame1PetFrameTexture, PartyMemberFrame2PetFrameTexture, PartyMemberFrame3PetFrameTexture, PartyMemberFrame4PetFrameTexture, FocusFrameTextureFrameTexture,
-                        TargetFrameToTTextureFrameTexture, FocusFrameToTTextureFrameTexture, BonusActionBarFrameTexture0, BonusActionBarFrameTexture1, BonusActionBarFrameTexture2, BonusActionBarFrameTexture3,
-                        BonusActionBarFrameTexture4, MainMenuBarTexture0, MainMenuBarTexture1, MainMenuBarTexture2, MainMenuBarTexture3, MainMenuMaxLevelBar0, MainMenuMaxLevelBar1, MainMenuMaxLevelBar2,
-                        MainMenuMaxLevelBar3, MinimapBorder, CastingBarFrameBorder, FocusFrameSpellBarBorder, TargetFrameSpellBarBorder, MiniMapTrackingButtonBorder, MiniMapLFGFrameBorder, MiniMapBattlefieldBorder,
-                        MiniMapMailBorder, MinimapBorderTop,
-                        select(1, TimeManagerClockButton:GetRegions())
-                }) do
-                        v:SetVertexColor(.35, .35, .35)
-                end
+function frame:QUEST_ACCEPTED(self, position, id)
+	if( id == 38188 or id == 38175) then
+		self:followerUpgrades()
+	end
+end
 
-                for i,v in pairs({ select(2, TimeManagerClockButton:GetRegions()) }) do
-                        v:SetVertexColor(1, 1, 1)
-                end
+function frame:ADDON_LOADED(self, addon)
+	print(addon);
+	if (addon == "Blizzard_TimeManager") then
 
-                self:UnregisterEvent("ADDON_LOADED")
-                frame:SetScript("OnEvent", nil)
+		for i, v in pairs({PlayerFrameTexture, TargetFrameTextureFrameTexture, PetFrameTexture, PartyMemberFrame1Texture, PartyMemberFrame2Texture, PartyMemberFrame3Texture, PartyMemberFrame4Texture,
+			PartyMemberFrame1PetFrameTexture, PartyMemberFrame2PetFrameTexture, PartyMemberFrame3PetFrameTexture, PartyMemberFrame4PetFrameTexture, FocusFrameTextureFrameTexture,
+			TargetFrameToTTextureFrameTexture, FocusFrameToTTextureFrameTexture, BonusActionBarFrameTexture0, BonusActionBarFrameTexture1, BonusActionBarFrameTexture2, BonusActionBarFrameTexture3,
+			BonusActionBarFrameTexture4, MainMenuBarTexture0, MainMenuBarTexture1, MainMenuBarTexture2, MainMenuBarTexture3, MainMenuMaxLevelBar0, MainMenuMaxLevelBar1, MainMenuMaxLevelBar2,
+			MainMenuMaxLevelBar3, MinimapBorder, CastingBarFrameBorder, FocusFrameSpellBarBorder, TargetFrameSpellBarBorder, MiniMapTrackingButtonBorder, MiniMapLFGFrameBorder, MiniMapBattlefieldBorder,
+			MiniMapMailBorder, MinimapBorderTop,
+			select(1, TimeManagerClockButton:GetRegions())
+		}) do
+			v:SetVertexColor(.35, .35, .35)
+		end
+		for i,v in pairs({ select(2, TimeManagerClockButton:GetRegions()) }) do
+				v:SetVertexColor(1, 1, 1)
+		end
+		MainMenuBarLeftEndCap:SetVertexColor(.35, .35, .35);
+		MainMenuBarRightEndCap:SetVertexColor(.35, .35, .35);	
+		self:UnregisterEvent("ADDON_LOADED")
+	end
+end
+
+frame:SetScript("OnEvent", function(self, event, ...)
+	-- if (addon == "Blizzard_TimeManager") then
+	-- 	for i, v in pairs({PlayerFrameTexture, TargetFrameTextureFrameTexture, PetFrameTexture, PartyMemberFrame1Texture, PartyMemberFrame2Texture, PartyMemberFrame3Texture, PartyMemberFrame4Texture,
+	-- 			PartyMemberFrame1PetFrameTexture, PartyMemberFrame2PetFrameTexture, PartyMemberFrame3PetFrameTexture, PartyMemberFrame4PetFrameTexture, FocusFrameTextureFrameTexture,
+	-- 			TargetFrameToTTextureFrameTexture, FocusFrameToTTextureFrameTexture, BonusActionBarFrameTexture0, BonusActionBarFrameTexture1, BonusActionBarFrameTexture2, BonusActionBarFrameTexture3,
+	-- 			BonusActionBarFrameTexture4, MainMenuBarTexture0, MainMenuBarTexture1, MainMenuBarTexture2, MainMenuBarTexture3, MainMenuMaxLevelBar0, MainMenuMaxLevelBar1, MainMenuMaxLevelBar2,
+	-- 			MainMenuMaxLevelBar3, MinimapBorder, CastingBarFrameBorder, FocusFrameSpellBarBorder, TargetFrameSpellBarBorder, MiniMapTrackingButtonBorder, MiniMapLFGFrameBorder, MiniMapBattlefieldBorder,
+	-- 			MiniMapMailBorder, MinimapBorderTop,
+	-- 			select(1, TimeManagerClockButton:GetRegions())
+	-- 	}) do
+	-- 			v:SetVertexColor(.35, .35, .35)
+	-- 	end
+
+	-- 	for i,v in pairs({ select(2, TimeManagerClockButton:GetRegions()) }) do
+	-- 			v:SetVertexColor(1, 1, 1)
+	-- 	end
+
+	-- 	self:UnregisterEvent("ADDON_LOADED")
+		-- MainMenuBarLeftEndCap:SetVertexColor(.35, .35, .35);
+		-- MainMenuBarRightEndCap:SetVertexColor(.35, .35, .35);
+
+
 
 		-- PlayerFrameHealthBar:SetStatusBarTexture([[Interface\RaidFrame\Raid-Bar-Hp-Fill]]);
 
@@ -59,8 +102,6 @@ frame:SetScript("OnEvent", function(self, event, addon)
 		-- TargetFrameManaBar:SetStatusBarTexture([[Interface\RaidFrame\Raid-Bar-Hp-Fill]]);
 		-- TargetFrameNameBackground:SetTexture([[Interface\RaidFrame\Raid-Bar-Hp-Fill]]);
 
-		MainMenuBarLeftEndCap:SetVertexColor(.35, .35, .35);
-		MainMenuBarRightEndCap:SetVertexColor(.35, .35, .35);
 		-- Character Bags
 		--MainMenuBarBackpackButton:ClearAllPoints()
 		--MainMenuBarBackpackButton:SetParent("UIParent")
@@ -69,5 +110,12 @@ frame:SetScript("OnEvent", function(self, event, addon)
 		--CharacterBag1Slot:Hide();
 		--CharacterBag2Slot:Hide();
 		--CharacterBag3Slot:Hide();
-        end
+	-- end
+
+	if (event == "ADDON_LOADED") then
+		self:ADDON_LOADED(self, ...)
+	end
+	if (event == "QUEST_ACCEPTED") then
+		self:QUEST_ACCEPTED(self, ...)
+	end
 end)
