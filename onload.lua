@@ -73,45 +73,6 @@ function frame:ADDON_LOADED(self, addon)
 end
 
 frame:SetScript("OnEvent", function(self, event, ...)
-	-- if (addon == "Blizzard_TimeManager") then
-	-- 	for i, v in pairs({PlayerFrameTexture, TargetFrameTextureFrameTexture, PetFrameTexture, PartyMemberFrame1Texture, PartyMemberFrame2Texture, PartyMemberFrame3Texture, PartyMemberFrame4Texture,
-	-- 			PartyMemberFrame1PetFrameTexture, PartyMemberFrame2PetFrameTexture, PartyMemberFrame3PetFrameTexture, PartyMemberFrame4PetFrameTexture, FocusFrameTextureFrameTexture,
-	-- 			TargetFrameToTTextureFrameTexture, FocusFrameToTTextureFrameTexture, BonusActionBarFrameTexture0, BonusActionBarFrameTexture1, BonusActionBarFrameTexture2, BonusActionBarFrameTexture3,
-	-- 			BonusActionBarFrameTexture4, MainMenuBarTexture0, MainMenuBarTexture1, MainMenuBarTexture2, MainMenuBarTexture3, MainMenuMaxLevelBar0, MainMenuMaxLevelBar1, MainMenuMaxLevelBar2,
-	-- 			MainMenuMaxLevelBar3, MinimapBorder, CastingBarFrameBorder, FocusFrameSpellBarBorder, TargetFrameSpellBarBorder, MiniMapTrackingButtonBorder, MiniMapLFGFrameBorder, MiniMapBattlefieldBorder,
-	-- 			MiniMapMailBorder, MinimapBorderTop,
-	-- 			select(1, TimeManagerClockButton:GetRegions())
-	-- 	}) do
-	-- 			v:SetVertexColor(.35, .35, .35)
-	-- 	end
-
-	-- 	for i,v in pairs({ select(2, TimeManagerClockButton:GetRegions()) }) do
-	-- 			v:SetVertexColor(1, 1, 1)
-	-- 	end
-
-	-- 	self:UnregisterEvent("ADDON_LOADED")
-		-- MainMenuBarLeftEndCap:SetVertexColor(.35, .35, .35);
-		-- MainMenuBarRightEndCap:SetVertexColor(.35, .35, .35);
-
-
-
-		-- PlayerFrameHealthBar:SetStatusBarTexture([[Interface\RaidFrame\Raid-Bar-Hp-Fill]]);
-
-		-- PlayerFrameManaBar:SetStatusBarTexture([[Interface\RaidFrame\Raid-Bar-Hp-Fill]]);
-		-- TargetFrameHealthBar:SetStatusBarTexture([[Interface\RaidFrame\Raid-Bar-Hp-Fill]]);
-		-- TargetFrameManaBar:SetStatusBarTexture([[Interface\RaidFrame\Raid-Bar-Hp-Fill]]);
-		-- TargetFrameNameBackground:SetTexture([[Interface\RaidFrame\Raid-Bar-Hp-Fill]]);
-
-		-- Character Bags
-		--MainMenuBarBackpackButton:ClearAllPoints()
-		--MainMenuBarBackpackButton:SetParent("UIParent")
-		--MainMenuBarBackpackButton:SetPoint("BOTTOMRIGHT", 0, 0)
-		--CharacterBag0Slot:Hide();
-		--CharacterBag1Slot:Hide();
-		--CharacterBag2Slot:Hide();
-		--CharacterBag3Slot:Hide();
-	-- end
-
 	if (event == "ADDON_LOADED") then
 		self:ADDON_LOADED(self, ...)
 	end
