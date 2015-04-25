@@ -50,7 +50,6 @@ function frame:QUEST_ACCEPTED(self, position, id)
 end
 
 function frame:ADDON_LOADED(self, addon)
-	print(addon);
 	if (addon == "Blizzard_TimeManager") then
 
 		for i, v in pairs({PlayerFrameTexture, TargetFrameTextureFrameTexture, PetFrameTexture, PartyMemberFrame1Texture, PartyMemberFrame2Texture, PartyMemberFrame3Texture, PartyMemberFrame4Texture,
