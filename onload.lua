@@ -67,7 +67,8 @@ function frame:ADDON_LOADED(self, addon)
 		end
 		MainMenuBarLeftEndCap:SetVertexColor(.35, .35, .35);
 		MainMenuBarRightEndCap:SetVertexColor(.35, .35, .35);	
-		self:UnregisterEvent("ADDON_LOADED")
+		MainMenuBar:SetScale(.75);
+		self:UnregisterEvent("ADDON_LOADED");
 	end
 end
 
