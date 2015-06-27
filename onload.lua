@@ -68,6 +68,7 @@ function frame:ADDON_LOADED(self, addon)
 		MainMenuBarLeftEndCap:SetVertexColor(.35, .35, .35);
 		MainMenuBarRightEndCap:SetVertexColor(.35, .35, .35);	
 		MainMenuBar:SetScale(.75);
+		CharacterMicroButton:SetPoint("BOTTOMLEFT", "UIParent", "BOTTOMLEFT", 0, 0);
 		self:UnregisterEvent("ADDON_LOADED");
 	end
 end
