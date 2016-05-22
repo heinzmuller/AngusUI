@@ -1,7 +1,7 @@
-## Interface: 60100
+## Interface: 20400
 ## Title: Angus|cffcc00ffUI|r
 ## Author: Angusdonals
-## Version: 6.1.2
+## Version: 2.4.3
 ## Notes: Angus UI.
 
 onload.lua
