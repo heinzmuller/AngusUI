@@ -1,7 +1,7 @@
-## Interface: 70200
+## Interface: 70300
 ## Title: Angus|cffcc00ffUI|r
-## Author: Angusdonals
-## Version: 7.2
+## Author: Angusdonals-Frostwhisper
+## Version: 7.3
 ## Notes: Angus UI.
 
 AngusUI.lua
