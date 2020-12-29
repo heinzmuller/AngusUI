@@ -1,7 +1,7 @@
 ## Interface: 90002
 ## Title: Angus|cffcc00ffUI|r
 ## Author: Angusdonals-Frostwhisper
-## Version: 7.3
+## Version: 9.0.2
 ## Notes: Angus UI.
 
 AngusUI.lua
