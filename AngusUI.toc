@@ -1,4 +1,4 @@
-## Interface: 70300
+## Interface: 90002
 ## Title: Angus|cffcc00ffUI|r
 ## Author: Angusdonals-Frostwhisper
 ## Version: 7.3
