@@ -1,7 +1,7 @@
-## Interface: 70300
+## Interface: 110000
 ## Title: Angus|cffcc00ffUI|r
 ## Author: Angusdonals-Frostwhisper
-## Version: 7.3
+## Version: 11.0.o
 ## Notes: Angus UI.
 
 AngusUI.lua
