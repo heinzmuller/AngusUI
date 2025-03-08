@@ -1,7 +1,11 @@
-## Interface: 110000
+## Interface: 110100, 110105
 ## Title: Angus|cffcc00ffUI|r
 ## Author: Angusdonals-Frostwhisper
-## Version: 11.0.o
+## Version: 11.1.0
 ## Notes: Angus UI.
 
 AngusUI.lua
+Crests.lua
+MythicPlus.lua
+Reputations.lua
+UI.lua
