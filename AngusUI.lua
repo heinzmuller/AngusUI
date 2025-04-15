@@ -18,10 +18,11 @@ end
 
 function SlashCommand(command)
     local commands = {
-        back = TeleportBack,
+        back = function() AngusUI:TeleportBack() end,
         rep = function() AngusUI:Reputations() end,
         crests = function() AngusUI:Crests() end,
         ui = function() AngusUI:UI() end,
+        delves = function() AngusUI:Delves() end,
     }
 
     if commands[command] then
@@ -31,46 +32,6 @@ function SlashCommand(command)
         for availableCommand, _ in pairs(commands) do
             print("/aui " .. availableCommand)
         end
-    end
-end
-
-local nonTeleportBack
-local backIds = {
-    65274,
-    63207,
-    63353,
-    65360,
-    63206,
-    63352,
-}
-local backs = Set(backIds)
-
-function TeleportBack()
-    local equippedItemId = GetInventoryItemID("player", 15)
-
-    function EquipTeleportBack()
-        for _, backId in ipairs(backIds) do
-            if C_Item.GetItemCount(backId, false) == 1 and C_Container.GetItemCooldown(backId) == 0 then
-                C_Item.EquipItemByName(backId)
-                break
-            end
-        end
-    end
-
-    if backs[equippedItemId] then
-        local cooldown = C_Item.GetItemCooldown(equippedItemId)
-
-        if cooldown > 0 then
-            C_Item.EquipItemByName(nonTeleportBack)
-        end
-    else
-        local itemLoc = ItemLocation:CreateFromEquipmentSlot(INVSLOT_BACK)
-
-        if itemLoc:IsValid() then
-            nonTeleportBack = C_Item.GetItemGUID(itemLoc)
-        end
-
-        EquipTeleportBack()
     end
 end
 
@@ -114,6 +75,17 @@ function frame:ADDON_LOADED(self, addon)
                 end
             end
         end
+
+        FRIENDS_FRAME_FRIEND_HEIGHT = 17
+
+        local widen = 50
+        local heighten = 300
+        FriendsFrame:SetWidth(FriendsFrame:GetWidth() + widen)
+        FriendsFrame:SetHeight(FriendsFrame:GetHeight() + heighten)
+        FriendsListFrame:SetWidth(FriendsListFrame:GetWidth() + widen)
+        FriendsListFrame:SetHeight(FriendsListFrame:GetHeight() + heighten)
+        FriendsListFrame.ScrollBox:SetWidth(FriendsListFrame.ScrollBox:GetWidth() + widen)
+        FriendsListFrame.ScrollBox:SetHeight(FriendsListFrame.ScrollBox:GetHeight() + heighten)
 
         self:UnregisterEvent("ADDON_LOADED")
     end

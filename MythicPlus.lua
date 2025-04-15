@@ -17,38 +17,56 @@ end
 function AngusUI:MythicPlus()
     local frame = CreateFrame("Frame", "AngusUIMythicPlusRewards", ChallengesFrame.WeeklyInfo)
     frame:SetSize(1, 1)
-    frame:SetPoint("RIGHT", ChallengesFrame.WeeklyInfo, "RIGHT", 0, -110)
+    frame:SetPoint("RIGHT", ChallengesFrame.WeeklyInfo, "RIGHT", 0, -100)
 
     local text = frame:CreateFontString(nil, "OVERLAY", "SystemFont_Small")
     text:SetFont(Inconsolata, 10)
     text:SetPoint("TOPRIGHT", frame, "TOPRIGHT")
 
     local endOfDungeon = {
-        champion(597),
-        champion(597),
-        champion(600),
-        champion(603),
-        champion(606),
-        hero(610),
-        hero(610),
-        hero(613),
-        hero(613)
+        champion(639),
+        champion(639),
+        champion(642),
+        champion(645),
+        hero(649),
+        hero(649),
+        hero(652),
+        hero(652),
+        hero(655),
+        hero(655),
+        hero(655),
     }
 
     local vault = {
-        champion(606),
-        hero(610),
-        hero(610),
-        hero(613),
-        hero(613),
-        hero(616),
-        hero(619),
-        hero(619),
-        mythic(623)
+        hero(649),
+        hero(649),
+        hero(652),
+        hero(652),
+        hero(655),
+        hero(658),
+        hero(658),
+        hero(658),
+        mythic(662),
+        mythic(662),
+        mythic(662),
+    }
+
+    local crests = {
+        hero(10),
+        hero(12),
+        hero(14),
+        hero(16),
+        hero(18),
+        mythic(10),
+        mythic(12),
+        mythic(14),
+        mythic(16),
+        mythic(18),
+        mythic(20),
     }
 
     local mythicItemLevels = ""
-    mythicItemLevels = mythicItemLevels .. "2    3    4    5    6    7    8    9   10\n"
+    mythicItemLevels = mythicItemLevels .. "2    3    4    5    6    7    8    9   10   11   12\n"
 
     for _, v in ipairs(endOfDungeon) do
         mythicItemLevels = mythicItemLevels .. v .. "  "
@@ -58,6 +76,12 @@ function AngusUI:MythicPlus()
 
     for _, v in ipairs(vault) do
         mythicItemLevels = mythicItemLevels .. v .. "  "
+    end
+
+    mythicItemLevels = mythicItemLevels .. "\n"
+
+    for _, v in ipairs(crests) do
+        mythicItemLevels = mythicItemLevels .. v .. "   "
     end
 
     text:SetText(mythicItemLevels)

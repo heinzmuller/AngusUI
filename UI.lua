@@ -18,7 +18,7 @@ function AngusUI:UI()
 
     local layoutToUse
 
-    if screenWidth == 3840 and screenHeight == 2160 then
+    if (screenWidth == 3840 or screenWidth == 2560) and (screenHeight == 2160 or screenHeight == 1440) then
         layoutToUse = "angusui 4k"
     else
         local shouldUseWideLayout = (screenWidth / screenHeight) > 2

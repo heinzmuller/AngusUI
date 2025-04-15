@@ -6,6 +6,8 @@
 
 AngusUI.lua
 Crests.lua
+Delves.lua
 MythicPlus.lua
 Reputations.lua
+TeleportBack.lua
 UI.lua
