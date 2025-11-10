@@ -1,0 +1,32 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [ main, develop, copilot/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Lua
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lua5.3
+    
+    - name: Run Unit Tests
+      run: lua5.3 tests/run_tests.lua
+    
+    - name: Test Summary
+      if: always()
+      run: |
+        if [ $? -eq 0 ]; then
+          echo "✓ All tests passed"
+        else
+          echo "✗ Some tests failed"
+          exit 1
+        fi
