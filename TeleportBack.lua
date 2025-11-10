@@ -9,10 +9,20 @@ local backIds = {
     63206,
     63352,
 }
-local backs = Set(backIds)
+
+-- Create a set from backIds for quick lookup
+local backs = {}
+for _, id in ipairs(backIds) do
+    backs[id] = true
+end
 
 function AngusUI:TeleportBack()
     local equippedItemId = GetInventoryItemID("player", 15)
+    
+    if not equippedItemId then
+        print("AngusUI: No back item equipped")
+        return
+    end
 
     function EquipTeleportBack()
         for _, backId in ipairs(backIds) do

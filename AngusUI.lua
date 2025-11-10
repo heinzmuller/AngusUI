@@ -8,7 +8,7 @@ frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 frame:RegisterEvent("MYTHIC_PLUS_CURRENT_AFFIX_UPDATE")
 
-function Set(list)
+local function Set(list)
     local set = {}
     for _, l in ipairs(list) do
         set[l] = true
@@ -16,7 +16,7 @@ function Set(list)
     return set
 end
 
-function SlashCommand(command)
+local function SlashCommand(command)
     local commands = {
         back = function() AngusUI:TeleportBack() end,
         rep = function() AngusUI:Reputations() end,
@@ -39,27 +39,36 @@ SlashCmdList.ANGUSUI = SlashCommand
 SLASH_ANGUSUI1, SLASH_ANGUSUI2 = "/angusui", "/aui"
 function frame:ADDON_LOADED(self, addon)
     if (addon == "Blizzard_TimeManager") then
-        for _, v in pairs(
-            {
-                MainMenuBar.EndCaps.LeftEndCap,
-                MainMenuBar.EndCaps.RightEndCap,
-            }
-        ) do
-            v:SetVertexColor(darkness, darkness, darkness)
+        -- Darken menu bar end caps
+        if MainMenuBar and MainMenuBar.EndCaps then
+            for _, v in pairs(
+                {
+                    MainMenuBar.EndCaps.LeftEndCap,
+                    MainMenuBar.EndCaps.RightEndCap,
+                }
+            ) do
+                if v then
+                    v:SetVertexColor(darkness, darkness, darkness)
+                end
+            end
         end
 
+        -- Darken various UI textures
         for _, v in pairs(
             {
-                MainMenuBar.BorderArt,
+                MainMenuBar and MainMenuBar.BorderArt,
                 MinimapCompassTexture,
-                PlayerFrame.PlayerFrameContainer.FrameTexture,
-                PlayerFrame.PlayerFrameContainer.AlternatePowerFrameTexture,
-                TargetFrame.TargetFrameContainer.FrameTexture,
+                PlayerFrame and PlayerFrame.PlayerFrameContainer and PlayerFrame.PlayerFrameContainer.FrameTexture,
+                PlayerFrame and PlayerFrame.PlayerFrameContainer and PlayerFrame.PlayerFrameContainer.AlternatePowerFrameTexture,
+                TargetFrame and TargetFrame.TargetFrameContainer and TargetFrame.TargetFrameContainer.FrameTexture,
             }
         ) do
-            v:SetVertexColor(.25, .25, .25)
+            if v then
+                v:SetVertexColor(.25, .25, .25)
+            end
         end
 
+        -- Darken action button textures
         for _, v in pairs(
             {
                 "MultiBarBottomLeftButton",
@@ -76,16 +85,22 @@ function frame:ADDON_LOADED(self, addon)
             end
         end
 
-        FRIENDS_FRAME_FRIEND_HEIGHT = 17
+        -- Expand friends frame
+        if FriendsFrame and FriendsListFrame then
+            FRIENDS_FRAME_FRIEND_HEIGHT = 17
 
-        local widen = 50
-        local heighten = 300
-        FriendsFrame:SetWidth(FriendsFrame:GetWidth() + widen)
-        FriendsFrame:SetHeight(FriendsFrame:GetHeight() + heighten)
-        FriendsListFrame:SetWidth(FriendsListFrame:GetWidth() + widen)
-        FriendsListFrame:SetHeight(FriendsListFrame:GetHeight() + heighten)
-        FriendsListFrame.ScrollBox:SetWidth(FriendsListFrame.ScrollBox:GetWidth() + widen)
-        FriendsListFrame.ScrollBox:SetHeight(FriendsListFrame.ScrollBox:GetHeight() + heighten)
+            local widen = 50
+            local heighten = 300
+            FriendsFrame:SetWidth(FriendsFrame:GetWidth() + widen)
+            FriendsFrame:SetHeight(FriendsFrame:GetHeight() + heighten)
+            FriendsListFrame:SetWidth(FriendsListFrame:GetWidth() + widen)
+            FriendsListFrame:SetHeight(FriendsListFrame:GetHeight() + heighten)
+            
+            if FriendsListFrame.ScrollBox then
+                FriendsListFrame.ScrollBox:SetWidth(FriendsListFrame.ScrollBox:GetWidth() + widen)
+                FriendsListFrame.ScrollBox:SetHeight(FriendsListFrame.ScrollBox:GetHeight() + heighten)
+            end
+        end
 
         self:UnregisterEvent("ADDON_LOADED")
     end
