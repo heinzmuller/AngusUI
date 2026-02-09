@@ -2,6 +2,10 @@ local _, AngusUI = ...
 
 function AngusUI:UI()
     local layouts = C_EditMode.GetLayouts();
+    if not layouts or not layouts.layouts then
+        return
+    end
+    
     local screenWidth, screenHeight = GetPhysicalScreenSize()
 
     if (layouts.activeLayout < 3) then
@@ -28,13 +32,8 @@ function AngusUI:UI()
 
     for i, layout in ipairs(layouts.layouts) do
         local layoutName = layout.layoutName:lower()
-        local isAngusUI = layoutName:find("angusui") ~= nil
 
-        if not isAngusUI then
-            return
-        end
-
-        if (layoutName == layoutToUse) then
+        if layoutName:find("angusui") and (layoutName == layoutToUse) then
             C_EditMode.SetActiveLayout(i + 2)
             return
         end

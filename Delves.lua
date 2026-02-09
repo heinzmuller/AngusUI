@@ -22,7 +22,7 @@ function AngusUI:StopDelveSpeedrun()
     local elapsed = time() - delveIsActive
 
     print("You completed the delve speedrun in " .. elapsed .. " seconds")
-    delveIsActive = false
+    delveIsActive = nil
 end
 
 function AngusUI:Delves()
