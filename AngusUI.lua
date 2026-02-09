@@ -1,7 +1,5 @@
 local _, AngusUI = ...
 
-local darkness = .6
-
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -38,69 +36,15 @@ end
 SlashCmdList.ANGUSUI = SlashCommand
 SLASH_ANGUSUI1, SLASH_ANGUSUI2 = "/angusui", "/aui"
 function frame:ADDON_LOADED(self, addon)
+    if (addon == "AngusUI") then
+        if AngusUI.SettingsInit then
+            AngusUI:SettingsInit()
+        end
+    end
+
     if (addon == "Blizzard_TimeManager") then
-        -- Darken menu bar end caps
-        if MainMenuBar and MainMenuBar.EndCaps then
-            for _, v in pairs(
-                {
-                    MainMenuBar.EndCaps.LeftEndCap,
-                    MainMenuBar.EndCaps.RightEndCap,
-                }
-            ) do
-                if v then
-                    v:SetVertexColor(darkness, darkness, darkness)
-                end
-            end
-        end
-
-        -- Darken various UI textures
-        for _, v in pairs(
-            {
-                MainMenuBar and MainMenuBar.BorderArt,
-                MinimapCompassTexture,
-                PlayerFrame and PlayerFrame.PlayerFrameContainer and PlayerFrame.PlayerFrameContainer.FrameTexture,
-                PlayerFrame and PlayerFrame.PlayerFrameContainer and PlayerFrame.PlayerFrameContainer.AlternatePowerFrameTexture,
-                TargetFrame and TargetFrame.TargetFrameContainer and TargetFrame.TargetFrameContainer.FrameTexture,
-            }
-        ) do
-            if v then
-                v:SetVertexColor(.25, .25, .25)
-            end
-        end
-
-        -- Darken action button textures
-        for _, v in pairs(
-            {
-                "MultiBarBottomLeftButton",
-                "MultiBarBottomRightButton",
-                "ActionButton",
-            }
-        ) do
-            for i = 1, 12 do
-                local frame = _G[v .. i .. "NormalTexture"]
-
-                if frame then
-                    frame:SetVertexColor(.5, .5, .5)
-                end
-            end
-        end
-
-        -- Expand friends frame
-        if FriendsFrame and FriendsListFrame then
-            FRIENDS_FRAME_FRIEND_HEIGHT = 17
-
-            local widen = 50
-            local heighten = 300
-            FriendsFrame:SetWidth(FriendsFrame:GetWidth() + widen)
-            FriendsFrame:SetHeight(FriendsFrame:GetHeight() + heighten)
-            FriendsListFrame:SetWidth(FriendsListFrame:GetWidth() + widen)
-            FriendsListFrame:SetHeight(FriendsListFrame:GetHeight() + heighten)
-            
-            if FriendsListFrame.ScrollBox then
-                FriendsListFrame.ScrollBox:SetWidth(FriendsListFrame.ScrollBox:GetWidth() + widen)
-                FriendsListFrame.ScrollBox:SetHeight(FriendsListFrame.ScrollBox:GetHeight() + heighten)
-            end
-        end
+        AngusUI:ApplyTheme()
+        AngusUI:FriendsFrame()
 
         self:UnregisterEvent("ADDON_LOADED")
     end
@@ -111,6 +55,11 @@ frame:SetScript(
     function(self, event, ...)
         if (event == "ADDON_LOADED") then
             self:ADDON_LOADED(self, ...)
+        end
+
+        if (event == "PLAYER_ENTERING_WORLD") then
+            AngusUI:ApplyTheme()
+            AngusUI:FriendsFrame()
         end
 
         if (event == "PLAYER_SPECIALIZATION_CHANGED") or (event == "PLAYER_ENTERING_WORLD") then

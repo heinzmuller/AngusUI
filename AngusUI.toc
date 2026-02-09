@@ -3,11 +3,15 @@
 ## Author: Angusdonals-Frostwhisper
 ## Version: 12.0.0
 ## Notes: Angus UI.
+## SavedVariables: AngusUIDB
 
 AngusUI.lua
 Crests.lua
 Delves.lua
+FriendsFrame.lua
 MythicPlus.lua
 Reputations.lua
+Settings.lua
+Theme.lua
 TeleportBack.lua
 UI.lua
