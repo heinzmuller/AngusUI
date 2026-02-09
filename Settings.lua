@@ -5,6 +5,7 @@ local defaultFriendsExtraHeight = 300
 local defaultThemeEnabled = true
 local defaultThemeDarkness = 0.25
 local defaultThemeButtonDarkness = 0.5
+local defaultThemeDesaturate = true
 
 function AngusUI:SettingsInit()
     if self.settingsInitialized then
@@ -21,6 +22,9 @@ function AngusUI:SettingsInit()
     end
     AngusUIDB.themeDarkness = AngusUIDB.themeDarkness or defaultThemeDarkness
     AngusUIDB.themeButtonDarkness = AngusUIDB.themeButtonDarkness or defaultThemeButtonDarkness
+    if AngusUIDB.themeDesaturate == nil then
+        AngusUIDB.themeDesaturate = defaultThemeDesaturate
+    end
 
     local category = Settings.RegisterVerticalLayoutCategory("AngusUI")
 
@@ -56,6 +60,18 @@ function AngusUI:SettingsInit()
         AngusUIDB.themeButtonDarkness
     )
 
+    local themeDesaturateSetting = Settings.RegisterAddOnSetting(
+        category,
+        "themeDesaturate",
+        "themeDesaturate",
+        AngusUIDB,
+        "boolean",
+        "Theme Desaturate",
+        AngusUIDB.themeDesaturate
+    )
+
+    Settings.CreateCheckbox(category, themeDesaturateSetting, "Grayscale textures")
+
     local themeOptions = Settings.CreateSliderOptions and Settings.CreateSliderOptions(0, 1, 0.05)
         or { min = 0, max = 1, step = 0.05 }
 
@@ -79,6 +95,10 @@ function AngusUI:SettingsInit()
         if themeButtonDarknessSetting.SetEnabled then
             themeButtonDarknessSetting:SetEnabled(enabled)
         end
+
+        if themeDesaturateSetting.SetEnabled then
+            themeDesaturateSetting:SetEnabled(enabled)
+        end
     end
 
     themeEnabledSetting:SetValueChangedCallback(UpdateThemeEnabled)
@@ -86,6 +106,9 @@ function AngusUI:SettingsInit()
         AngusUI:ApplyTheme()
     end)
     themeButtonDarknessSetting:SetValueChangedCallback(function()
+        AngusUI:ApplyTheme()
+    end)
+    themeDesaturateSetting:SetValueChangedCallback(function()
         AngusUI:ApplyTheme()
     end)
 

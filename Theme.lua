@@ -1,13 +1,14 @@
 local _, AngusUI = ...
 
 local defaultThemeEnabled = true
-local defaultThemeDarkness = 0.5
-local defaultThemeButtonDarkness = 0.25
+local defaultThemeDarkness = 0.4
+local defaultThemeButtonDarkness = 0.4
 
-function AngusUI:Theme()
+function AngusUI:Theme(forceReset)
     local enabled = defaultThemeEnabled
     local darkness = defaultThemeDarkness
     local buttonDarkness = defaultThemeButtonDarkness
+    local desaturateEnabled = true
 
     if AngusUIDB then
         if AngusUIDB.themeEnabled ~= nil then
@@ -16,11 +17,18 @@ function AngusUI:Theme()
 
         darkness = AngusUIDB.themeDarkness or darkness
         buttonDarkness = AngusUIDB.themeButtonDarkness or buttonDarkness
+        if AngusUIDB.themeDesaturate ~= nil then
+            desaturateEnabled = AngusUIDB.themeDesaturate
+        end
     end
 
-    if not enabled then
+    if not enabled and not forceReset then
         return
     end
+
+    local textureValue = forceReset and 1 or darkness
+    local buttonValue = forceReset and 1 or buttonDarkness
+    local desaturate = (not forceReset) and desaturateEnabled
     -- Darken menu bar end caps
     local endCaps = MainActionBar and MainActionBar.EndCaps
     if not endCaps and MainMenuBar then
@@ -35,7 +43,10 @@ function AngusUI:Theme()
             }
         ) do
             if v then
-                v:SetVertexColor(darkness, darkness, darkness)
+                if v.SetDesaturation then
+                    v:SetDesaturation(desaturate and 1 or 0)
+                end
+                v:SetVertexColor(textureValue, textureValue, textureValue)
             end
         end
     end
@@ -52,7 +63,10 @@ function AngusUI:Theme()
         }
     ) do
         if v then
-            v:SetVertexColor(darkness, darkness, darkness)
+            if v.SetDesaturation then
+                v:SetDesaturation(desaturate and 1 or 0)
+            end
+            v:SetVertexColor(textureValue, textureValue, textureValue)
         end
     end
 
@@ -68,14 +82,34 @@ function AngusUI:Theme()
             local frame = _G[v .. i .. "NormalTexture"]
 
             if frame then
-                frame:SetVertexColor(buttonDarkness, buttonDarkness, buttonDarkness)
+                if frame.SetDesaturation then
+                    frame:SetDesaturation(desaturate and 1 or 0)
+                end
+                frame:SetVertexColor(buttonValue, buttonValue, buttonValue)
             end
         end
     end
 end
 
 function AngusUI:ApplyTheme()
-    if self.Theme then
-        self:Theme()
+    if not self.Theme then
+        return
     end
+
+    local enabled = AngusUIDB and AngusUIDB.themeEnabled
+    if enabled == false and self.themeWasEnabled == nil then
+        return
+    end
+
+    if enabled == false and self.themeWasEnabled == true then
+        self:Theme(true)
+        self.themeWasEnabled = false
+        return
+    end
+
+    if enabled == true then
+        self.themeWasEnabled = true
+    end
+
+    self:Theme(false)
 end
