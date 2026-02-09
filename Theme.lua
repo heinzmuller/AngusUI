@@ -43,6 +43,7 @@ function AngusUI:Theme()
     -- Darken various UI textures
     for _, v in pairs(
         {
+            MainActionBar and MainActionBar.BorderArt,
             MainMenuBar and MainMenuBar.BorderArt,
             MinimapCompassTexture,
             PlayerFrame and PlayerFrame.PlayerFrameContainer and PlayerFrame.PlayerFrameContainer.FrameTexture,
