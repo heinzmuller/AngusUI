@@ -43,10 +43,10 @@ function AngusUI:Crests()
 
             -- Gather high watermark info for all equipment slots
             for slotName, slotId in next, Enum.ItemRedundancySlot do
-                local highWatermark = C_ItemUpgrade.GetHighWatermarkForSlot(slotId)
+                local characterHighWatermark, accountHighWatermark = C_ItemUpgrade.GetHighWatermarkForSlot(slotId)
                 slotInfo[slotId] = { 
-                    meetsRequirement = highWatermark > iLvls[achievementId], 
-                    itemLevel = highWatermark, 
+                    meetsRequirement = characterHighWatermark > iLvls[achievementId], 
+                    itemLevel = characterHighWatermark, 
                     name = slotName 
                 }
             end
