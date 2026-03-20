@@ -6,7 +6,7 @@ local sectionSpacing = 4
 local sectionCount = 5
 local panelHeight = (sectionHeight * sectionCount) + (sectionSpacing * (sectionCount - 1))
 local panelOffsetX = 10
-local panelBottomOffset = 86
+local panelBottomOffset = 110
 
 local recommendations = {
     DEATHKNIGHT = {

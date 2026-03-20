@@ -53,33 +53,37 @@ local function GetSlotButton(frameName)
 end
 
 local function GetOverlay(button, fontSize, yOffset)
-    if button.AngusUIItemLevelText then
-        return button.AngusUIItemLevelText
+    local text = button.AngusUIItemLevelText
+
+    if not text then
+        text = button:CreateFontString(nil, "OVERLAY")
+        text:SetJustifyH("CENTER")
+        text:SetShadowOffset(1, -1)
+        text:SetShadowColor(0, 0, 0, 1)
+        button.AngusUIItemLevelText = text
     end
 
-    local text = button:CreateFontString(nil, "OVERLAY")
-    text:SetFont(Inconsolata, fontSize or 10, "OUTLINE")
+    text:SetFont(Inconsolata, fontSize or 11, "OUTLINE")
+    text:ClearAllPoints()
     text:SetPoint("BOTTOM", button, "BOTTOM", 0, yOffset or 2)
-    text:SetJustifyH("CENTER")
-    text:SetShadowOffset(1, -1)
-    text:SetShadowColor(0, 0, 0, 1)
-    button.AngusUIItemLevelText = text
 
     return text
 end
 
 local function GetBindOverlay(button)
-    if button.AngusUIBindText then
-        return button.AngusUIBindText
+    local text = button.AngusUIBindText
+
+    if not text then
+        text = button:CreateFontString(nil, "OVERLAY")
+        text:SetJustifyH("CENTER")
+        text:SetShadowOffset(1, -1)
+        text:SetShadowColor(0, 0, 0, 1)
+        button.AngusUIBindText = text
     end
 
-    local text = button:CreateFontString(nil, "OVERLAY")
-    text:SetFont(Inconsolata, 8, "OUTLINE")
+    text:SetFont(Inconsolata, 9, "OUTLINE")
+    text:ClearAllPoints()
     text:SetPoint("TOP", button, "TOP", 0, -1)
-    text:SetJustifyH("CENTER")
-    text:SetShadowOffset(1, -1)
-    text:SetShadowColor(0, 0, 0, 1)
-    button.AngusUIBindText = text
 
     return text
 end
@@ -211,6 +215,12 @@ end
 
 local function GetContainerBindLabel(containerID, slotID, button)
     local itemLocation = ItemLocation:CreateFromBagAndSlot(containerID, slotID)
+    local containerItemInfo = C_Container and C_Container.GetContainerItemInfo and C_Container.GetContainerItemInfo(containerID, slotID)
+
+    if containerItemInfo and containerItemInfo.isBound then
+        button.AngusUIItemLevelPending = nil
+        return nil
+    end
 
     if itemLocation and itemLocation:IsValid() and C_Item and C_Item.IsBoundToAccountUntilEquip and C_Item.IsBoundToAccountUntilEquip(itemLocation) then
         return "WuE", 0.45, 0.85, 1
@@ -360,7 +370,7 @@ local function HookFrames(self)
 
     if BankPanelItemButtonMixin and not self.bankItemButtonHooked then
         hooksecurefunc(BankPanelItemButtonMixin, "Refresh", function(itemButton)
-            UpdateOverlay(itemButton, GetBankItemLevel(itemButton), 9, 1)
+            UpdateOverlay(itemButton, GetBankItemLevel(itemButton), 10, 1)
             UpdateBankBindOverlay(itemButton)
         end)
 
@@ -383,7 +393,7 @@ local function RefreshCharacterItemLevels()
         local slotButton = GetSlotButton(slotInfo.frameName)
 
         if slotButton then
-            UpdateOverlay(slotButton, GetEquippedItemLevel(slotInfo.slotId, slotButton), 10, 2)
+            UpdateOverlay(slotButton, GetEquippedItemLevel(slotInfo.slotId, slotButton), 11, 2)
         end
     end
 end
@@ -394,7 +404,7 @@ local function RefreshBagFrameItemLevels(frame)
     end
 
     for _, itemButton in frame:EnumerateValidItems() do
-        UpdateOverlay(itemButton, GetBagItemLevel(itemButton), 9, 1)
+        UpdateOverlay(itemButton, GetBagItemLevel(itemButton), 10, 1)
         UpdateBagBindOverlay(itemButton)
     end
 end
@@ -414,7 +424,7 @@ local function RefreshFlyoutItemLevels()
 
     for _, itemButton in ipairs(EquipmentFlyoutFrame.buttons) do
         if itemButton:IsShown() then
-            UpdateOverlay(itemButton, GetFlyoutItemLevel(itemButton), 9, 1)
+            UpdateOverlay(itemButton, GetFlyoutItemLevel(itemButton), 10, 1)
         elseif itemButton.AngusUIItemLevelText then
             itemButton.AngusUIItemLevelText:SetText("")
             itemButton.AngusUIItemLevelText:Hide()
@@ -428,7 +438,7 @@ local function RefreshBankItemOverlays()
     end
 
     for itemButton in BankPanel:EnumerateValidItems() do
-        UpdateOverlay(itemButton, GetBankItemLevel(itemButton), 9, 1)
+        UpdateOverlay(itemButton, GetBankItemLevel(itemButton), 10, 1)
         UpdateBankBindOverlay(itemButton)
     end
 end
