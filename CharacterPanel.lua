@@ -2,6 +2,7 @@ local _, AngusUI = ...
 
 local Inconsolata = "Interface\\AddOns\\AngusUI\\Inconsolata.ttf"
 local MIN_ITEM_LEVEL_DISPLAY = 14
+local ITEM_BIND_ON_EQUIP = Enum and Enum.ItemBind and Enum.ItemBind.OnEquip or 2
 local bagEquipLocations = {
     INVTYPE_HEAD = true,
     INVTYPE_NECK = true,
@@ -63,6 +64,22 @@ local function GetOverlay(button, fontSize, yOffset)
     text:SetShadowOffset(1, -1)
     text:SetShadowColor(0, 0, 0, 1)
     button.AngusUIItemLevelText = text
+
+    return text
+end
+
+local function GetBindOverlay(button)
+    if button.AngusUIBindText then
+        return button.AngusUIBindText
+    end
+
+    local text = button:CreateFontString(nil, "OVERLAY")
+    text:SetFont(Inconsolata, 8, "OUTLINE")
+    text:SetPoint("TOP", button, "TOP", 0, -1)
+    text:SetJustifyH("CENTER")
+    text:SetShadowOffset(1, -1)
+    text:SetShadowColor(0, 0, 0, 1)
+    button.AngusUIBindText = text
 
     return text
 end
@@ -154,12 +171,12 @@ local function GetEquippedItemLevel(slotId, slotButton)
     return GetItemLevelFromLocation(itemLocation, slotButton)
 end
 
-local function IsRelevantBagItem(bag, slot)
+local function IsRelevantContainerItem(containerID, slotID)
     if not C_Container or not C_Container.GetContainerItemID then
         return false
     end
 
-    local itemID = C_Container.GetContainerItemID(bag, slot)
+    local itemID = C_Container.GetContainerItemID(containerID, slotID)
     if not itemID or not C_Item or not C_Item.GetItemInfoInstant then
         return false
     end
@@ -168,21 +185,84 @@ local function IsRelevantBagItem(bag, slot)
     return bagEquipLocations[itemEquipLoc] == true
 end
 
+local function GetContainerItemLevel(containerID, slotID, button)
+    if not IsRelevantContainerItem(containerID, slotID) then
+        button.AngusUIItemLevelPending = nil
+        return nil
+    end
+
+    local itemLocation = ItemLocation:CreateFromBagAndSlot(containerID, slotID)
+    return GetItemLevelFromLocation(itemLocation, button)
+end
+
 local function GetBagItemLevel(itemButton)
     local bag = itemButton:GetBagID()
     local slot = itemButton:GetID()
 
-    if not IsRelevantBagItem(bag, slot) then
-        itemButton.AngusUIItemLevelPending = nil
+    return GetContainerItemLevel(bag, slot, itemButton)
+end
+
+local function GetBankItemLevel(itemButton)
+    local bankTabID = itemButton:GetBankTabID()
+    local slotID = itemButton:GetContainerSlotID()
+
+    return GetContainerItemLevel(bankTabID, slotID, itemButton)
+end
+
+local function GetContainerBindLabel(containerID, slotID, button)
+    local itemLocation = ItemLocation:CreateFromBagAndSlot(containerID, slotID)
+
+    if itemLocation and itemLocation:IsValid() and C_Item and C_Item.IsBoundToAccountUntilEquip and C_Item.IsBoundToAccountUntilEquip(itemLocation) then
+        return "WuE", 0.45, 0.85, 1
+    end
+
+    local itemLink = C_Container and C_Container.GetContainerItemLink and C_Container.GetContainerItemLink(containerID, slotID)
+    if not itemLink then
+        button.AngusUIItemLevelPending = nil
         return nil
     end
 
-    local itemLocation = ItemLocation:CreateFromBagAndSlot(bag, slot)
-    return GetItemLevelFromLocation(itemLocation, itemButton)
+    local itemInfo = C_Item and C_Item.GetItemInfo and { C_Item.GetItemInfo(itemLink) } or { GetItemInfo(itemLink) }
+    if not itemInfo[1] then
+        QueueRefresh(itemLink, button, true)
+        return nil
+    end
+
+    local bindType = itemInfo[14]
+    if bindType == ITEM_BIND_ON_EQUIP then
+        return "BoE", 1, 0.82, 0
+    end
+
+    button.AngusUIItemLevelPending = nil
+    return nil
 end
 
 local function GetFlyoutItemLink(itemButton)
-    if not itemButton.location or itemButton.location >= (EQUIPMENTFLYOUT_FIRST_SPECIAL_LOCATION or 0xFFFFFFFD) then
+    if itemButton.itemLink then
+        return itemButton.itemLink
+    end
+
+    if itemButton.GetItemLocation then
+        local itemLocation = itemButton:GetItemLocation()
+
+        if itemLocation and itemLocation.IsValid and itemLocation:IsValid() then
+            if itemLocation.IsBagAndSlot and itemLocation:IsBagAndSlot() then
+                local bag, slot = itemLocation:GetBagAndSlot()
+                return C_Container and C_Container.GetContainerItemLink and C_Container.GetContainerItemLink(bag, slot)
+            end
+
+            if itemLocation.IsEquipmentSlot and itemLocation:IsEquipmentSlot() then
+                return GetInventoryItemLink("player", itemLocation:GetEquipmentSlot())
+            end
+        end
+    end
+
+    local location = itemButton.location
+    if type(location) ~= "number" then
+        return nil
+    end
+
+    if location >= (EQUIPMENTFLYOUT_FIRST_SPECIAL_LOCATION or 0xFFFFFFFD) then
         return nil
     end
 
@@ -190,7 +270,7 @@ local function GetFlyoutItemLink(itemButton)
         return nil
     end
 
-    local locationData = EquipmentManager_GetLocationData(itemButton.location)
+    local locationData = EquipmentManager_GetLocationData(location)
     if not locationData or next(locationData) == nil then
         return nil
     end
@@ -217,6 +297,28 @@ local function UpdateOverlay(button, itemLevel, fontSize, yOffset)
         text:SetText("")
         text:Hide()
     end
+end
+
+local function UpdateBindOverlay(button, containerID, slotID)
+    local text = GetBindOverlay(button)
+    local label, r, g, b = GetContainerBindLabel(containerID, slotID, button)
+
+    if label then
+        text:SetText(label)
+        text:SetTextColor(r or 1, g or 1, b or 1)
+        text:Show()
+    else
+        text:SetText("")
+        text:Hide()
+    end
+end
+
+local function UpdateBagBindOverlay(button)
+    UpdateBindOverlay(button, button:GetBagID(), button:GetID())
+end
+
+local function UpdateBankBindOverlay(button)
+    UpdateBindOverlay(button, button:GetBankTabID(), button:GetContainerSlotID())
 end
 
 local function HookBagFrame(frame)
@@ -256,6 +358,15 @@ local function HookFrames(self)
         self.characterFlyoutFrameHooked = true
     end
 
+    if BankPanelItemButtonMixin and not self.bankItemButtonHooked then
+        hooksecurefunc(BankPanelItemButtonMixin, "Refresh", function(itemButton)
+            UpdateOverlay(itemButton, GetBankItemLevel(itemButton), 9, 1)
+            UpdateBankBindOverlay(itemButton)
+        end)
+
+        self.bankItemButtonHooked = true
+    end
+
     HookBagFrame(ContainerFrameCombinedBags)
 
     for index = 1, NUM_CONTAINER_FRAMES or 6 do
@@ -284,6 +395,7 @@ local function RefreshBagFrameItemLevels(frame)
 
     for _, itemButton in frame:EnumerateValidItems() do
         UpdateOverlay(itemButton, GetBagItemLevel(itemButton), 9, 1)
+        UpdateBagBindOverlay(itemButton)
     end
 end
 
@@ -310,6 +422,17 @@ local function RefreshFlyoutItemLevels()
     end
 end
 
+local function RefreshBankItemOverlays()
+    if not BankPanel or not BankFrame or not BankFrame:IsShown() or not BankPanel.EnumerateValidItems then
+        return
+    end
+
+    for itemButton in BankPanel:EnumerateValidItems() do
+        UpdateOverlay(itemButton, GetBankItemLevel(itemButton), 9, 1)
+        UpdateBankBindOverlay(itemButton)
+    end
+end
+
 local function QueueFlyoutRefresh(self)
     if not EquipmentFlyoutFrame or not EquipmentFlyoutFrame:IsShown() then
         return
@@ -333,6 +456,7 @@ function AngusUI:CharacterPanel()
     HookFrames(self)
     RefreshCharacterItemLevels()
     RefreshBagItemLevels()
+    RefreshBankItemOverlays()
     RefreshFlyoutItemLevels()
     QueueFlyoutRefresh(self)
 end
