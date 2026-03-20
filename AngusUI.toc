@@ -8,7 +8,6 @@
 AngusUI.lua
 CharacterPanel.lua
 Crests.lua
-Delves.lua
 FriendsFrame.lua
 MythicPlus.lua
 Reputations.lua
@@ -17,3 +16,4 @@ TalentRecommendations.lua
 Theme.lua
 TeleportBack.lua
 UI.lua
+WorldQuestIcons.lua

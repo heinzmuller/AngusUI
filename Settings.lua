@@ -6,6 +6,8 @@ local defaultThemeEnabled = true
 local defaultThemeDarkness = 0.25
 local defaultThemeButtonDarkness = 0.5
 local defaultThemeDesaturate = true
+local defaultWorldQuestRewardIcons = true
+local defaultWorldQuestUpgradeArrow = true
 
 function AngusUI:SettingsInit()
     if self.settingsInitialized then
@@ -24,6 +26,12 @@ function AngusUI:SettingsInit()
     AngusUIDB.themeButtonDarkness = AngusUIDB.themeButtonDarkness or defaultThemeButtonDarkness
     if AngusUIDB.themeDesaturate == nil then
         AngusUIDB.themeDesaturate = defaultThemeDesaturate
+    end
+    if AngusUIDB.worldQuestRewardIcons == nil then
+        AngusUIDB.worldQuestRewardIcons = defaultWorldQuestRewardIcons
+    end
+    if AngusUIDB.worldQuestUpgradeArrow == nil then
+        AngusUIDB.worldQuestUpgradeArrow = defaultWorldQuestUpgradeArrow
     end
 
     local category = Settings.RegisterVerticalLayoutCategory("AngusUI")
@@ -70,7 +78,29 @@ function AngusUI:SettingsInit()
         AngusUIDB.themeDesaturate
     )
 
+    local worldQuestRewardIconsSetting = Settings.RegisterAddOnSetting(
+        category,
+        "worldQuestRewardIcons",
+        "worldQuestRewardIcons",
+        AngusUIDB,
+        "boolean",
+        "World Quest Reward Icons",
+        AngusUIDB.worldQuestRewardIcons
+    )
+
+    local worldQuestUpgradeArrowSetting = Settings.RegisterAddOnSetting(
+        category,
+        "worldQuestUpgradeArrow",
+        "worldQuestUpgradeArrow",
+        AngusUIDB,
+        "boolean",
+        "World Quest Upgrade Arrow",
+        AngusUIDB.worldQuestUpgradeArrow
+    )
+
     Settings.CreateCheckbox(category, themeDesaturateSetting, "Grayscale textures")
+    Settings.CreateCheckbox(category, worldQuestRewardIconsSetting, "Replace world quest icons with reward icons")
+    Settings.CreateCheckbox(category, worldQuestUpgradeArrowSetting, "Show upgrade arrow for better gear rewards")
 
     local themeOptions = Settings.CreateSliderOptions and Settings.CreateSliderOptions(0, 1, 0.05)
         or { min = 0, max = 1, step = 0.05 }
@@ -110,6 +140,12 @@ function AngusUI:SettingsInit()
     end)
     themeDesaturateSetting:SetValueChangedCallback(function()
         AngusUI:ApplyTheme()
+    end)
+    worldQuestRewardIconsSetting:SetValueChangedCallback(function()
+        AngusUI:QueueWorldQuestIconsRefresh(true)
+    end)
+    worldQuestUpgradeArrowSetting:SetValueChangedCallback(function()
+        AngusUI:QueueWorldQuestIconsRefresh(true)
     end)
 
     UpdateThemeEnabled()
@@ -166,4 +202,5 @@ function AngusUI:SettingsInit()
 
     AngusUI:FriendsFrame()
     AngusUI:ApplyTheme()
+    AngusUI:QueueWorldQuestIconsRefresh(true)
 end

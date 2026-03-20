@@ -6,7 +6,13 @@ frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 frame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
 frame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+frame:RegisterEvent("BAG_UPDATE_DELAYED")
 frame:RegisterEvent("MYTHIC_PLUS_CURRENT_AFFIX_UPDATE")
+frame:RegisterEvent("QUEST_LOG_UPDATE")
+frame:RegisterEvent("QUEST_ACCEPTED")
+frame:RegisterEvent("QUEST_REMOVED")
+frame:RegisterEvent("TASK_PROGRESS_UPDATE")
+frame:RegisterEvent("QUEST_WATCH_LIST_CHANGED")
 
 local function Set(list)
     local set = {}
@@ -22,7 +28,6 @@ local function SlashCommand(command)
         rep = function() AngusUI:Reputations() end,
         crests = function() AngusUI:Crests() end,
         ui = function() AngusUI:UI() end,
-        delves = function() AngusUI:Delves() end,
     }
 
     if commands[command] then
@@ -78,8 +83,21 @@ frame:SetScript(
             AngusUI:TalentRecommendationsRefresh()
         end
 
-        if (event == "PLAYER_EQUIPMENT_CHANGED") or (event == "GET_ITEM_INFO_RECEIVED") then
+        if (event == "PLAYER_EQUIPMENT_CHANGED") or (event == "GET_ITEM_INFO_RECEIVED") or (event == "BAG_UPDATE_DELAYED") then
             AngusUI:CharacterPanel()
+        end
+
+        if
+            (event == "PLAYER_ENTERING_WORLD") or
+            (event == "PLAYER_EQUIPMENT_CHANGED") or
+            (event == "GET_ITEM_INFO_RECEIVED") or
+            (event == "QUEST_LOG_UPDATE") or
+            (event == "QUEST_ACCEPTED") or
+            (event == "QUEST_REMOVED") or
+            (event == "TASK_PROGRESS_UPDATE") or
+            (event == "QUEST_WATCH_LIST_CHANGED")
+        then
+            AngusUI:QueueWorldQuestIconsRefresh()
         end
 
         if (event == "MYTHIC_PLUS_CURRENT_AFFIX_UPDATE") then
