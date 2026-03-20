@@ -4,6 +4,8 @@ local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+frame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+frame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 frame:RegisterEvent("MYTHIC_PLUS_CURRENT_AFFIX_UPDATE")
 
 local function Set(list)
@@ -45,8 +47,10 @@ function frame:ADDON_LOADED(self, addon)
     if (addon == "Blizzard_TimeManager") then
         AngusUI:ApplyTheme()
         AngusUI:FriendsFrame()
+    end
 
-        self:UnregisterEvent("ADDON_LOADED")
+    if (addon == "Blizzard_CharacterUI") then
+        AngusUI:CharacterPanel()
     end
 end
 
@@ -60,10 +64,15 @@ frame:SetScript(
         if (event == "PLAYER_ENTERING_WORLD") then
             AngusUI:ApplyTheme()
             AngusUI:FriendsFrame()
+            AngusUI:CharacterPanel()
         end
 
         if (event == "PLAYER_SPECIALIZATION_CHANGED") or (event == "PLAYER_ENTERING_WORLD") then
             AngusUI:UI()
+        end
+
+        if (event == "PLAYER_EQUIPMENT_CHANGED") or (event == "GET_ITEM_INFO_RECEIVED") then
+            AngusUI:CharacterPanel()
         end
 
         if (event == "MYTHIC_PLUS_CURRENT_AFFIX_UPDATE") then
