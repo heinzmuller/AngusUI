@@ -52,6 +52,10 @@ function frame:ADDON_LOADED(self, addon)
     if (addon == "Blizzard_CharacterUI") then
         AngusUI:CharacterPanel()
     end
+
+    if (addon == "Blizzard_PlayerSpells") then
+        AngusUI:TalentRecommendations()
+    end
 end
 
 frame:SetScript(
@@ -65,10 +69,13 @@ frame:SetScript(
             AngusUI:ApplyTheme()
             AngusUI:FriendsFrame()
             AngusUI:CharacterPanel()
+            AngusUI:TalentRecommendations()
         end
 
         if (event == "PLAYER_SPECIALIZATION_CHANGED") or (event == "PLAYER_ENTERING_WORLD") then
             AngusUI:UI()
+            AngusUI:TalentRecommendations()
+            AngusUI:TalentRecommendationsRefresh()
         end
 
         if (event == "PLAYER_EQUIPMENT_CHANGED") or (event == "GET_ITEM_INFO_RECEIVED") then

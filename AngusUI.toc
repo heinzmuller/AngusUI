@@ -13,6 +13,7 @@ FriendsFrame.lua
 MythicPlus.lua
 Reputations.lua
 Settings.lua
+TalentRecommendations.lua
 Theme.lua
 TeleportBack.lua
 UI.lua
