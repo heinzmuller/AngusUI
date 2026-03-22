@@ -6,6 +6,7 @@
 ## SavedVariables: AngusUIDB
 
 AngusUI.lua
+Screenshots.lua
 ItemOverlays.lua
 CharacterPanel.lua
 Crests.lua

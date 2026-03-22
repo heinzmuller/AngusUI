@@ -13,6 +13,10 @@ frame:RegisterEvent("QUEST_ACCEPTED")
 frame:RegisterEvent("QUEST_REMOVED")
 frame:RegisterEvent("TASK_PROGRESS_UPDATE")
 frame:RegisterEvent("QUEST_WATCH_LIST_CHANGED")
+frame:RegisterEvent("PLAYER_LEVEL_UP")
+frame:RegisterEvent("ACHIEVEMENT_EARNED")
+frame:RegisterEvent("NEW_MOUNT_ADDED")
+frame:RegisterEvent("NEW_PET_ADDED")
 
 local function Set(list)
     local set = {}
@@ -107,6 +111,22 @@ frame:SetScript(
 
             AngusUI:MythicPlus()
             self:UnregisterEvent("MYTHIC_PLUS_CURRENT_AFFIX_UPDATE")
+        end
+
+        if (event == "PLAYER_LEVEL_UP") then
+            AngusUI:TakeLevelUpScreenshot(...)
+        end
+
+        if (event == "ACHIEVEMENT_EARNED") then
+            AngusUI:TakeAchievementScreenshot(...)
+        end
+
+        if (event == "NEW_MOUNT_ADDED") then
+            AngusUI:TakeMountScreenshot(...)
+        end
+
+        if (event == "NEW_PET_ADDED") then
+            AngusUI:TakePetScreenshot(...)
         end
     end
 )

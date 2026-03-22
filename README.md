@@ -20,6 +20,7 @@ reputations, and crests.
 - Weekly crest quest and item level achievement tracking
 - Reputation quest status for a specific faction
 - Cloak teleportation swap-and-return convenience
+- Automatic screenshots on tracked events
 - World quest reward icons on the map and in the objective tracker
 
 ## Commands
@@ -38,6 +39,7 @@ All commands use the `/aui` or `/angusui` prefix:
 
 ```
 AngusUI.lua      - Addon entry point, events, slash commands, UI tweaks
+Screenshots.lua  - Automatic screenshots for tracked events such as level ups, achievements, mounts, and pets
 UI.lua           - Edit Mode layout switching based on screen resolution
 MythicPlus.lua   - Mythic+ reward table overlay
 Crests.lua       - Crest quests and item level achievement tracking

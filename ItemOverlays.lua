@@ -3,6 +3,16 @@ local _, AngusUI = ...
 local Inconsolata = "Interface\\AddOns\\AngusUI\\Inconsolata.ttf"
 local MIN_ITEM_LEVEL_DISPLAY = 14
 local ITEM_BIND_ON_EQUIP = Enum and Enum.ItemBind and Enum.ItemBind.OnEquip or 2
+local ITEM_QUALITY_POOR = Enum and Enum.ItemQuality and Enum.ItemQuality.Poor or 0
+local ITEM_QUALITY_COMMON = Enum and Enum.ItemQuality and Enum.ItemQuality.Common or 1
+local ITEM_QUALITY_RARE = Enum and Enum.ItemQuality and Enum.ItemQuality.Rare or 3
+local ITEM_QUALITY_EPIC = Enum and Enum.ItemQuality and Enum.ItemQuality.Epic or 4
+local ITEM_LEVEL_Y_OFFSET_ADJUST = 2
+local ITEM_LEVEL_QUALITY_LIGHTEN = 0.30
+local LABEL_BACKGROUND_INSET = 1
+local LABEL_BACKGROUND_PADDING = 4
+local BLACK_GRADIENT_TOP = CreateColor and CreateColor(0, 0, 0, 1) or nil
+local BLACK_GRADIENT_CLEAR = CreateColor and CreateColor(0, 0, 0, 0) or nil
 local bagEquipLocations = {
     INVTYPE_HEAD = true,
     INVTYPE_NECK = true,
@@ -65,9 +75,51 @@ local function GetOverlay(button, fontSize, yOffset)
 
     text:SetFont(Inconsolata, fontSize or 11, "OUTLINE")
     text:ClearAllPoints()
-    text:SetPoint("BOTTOM", button, "BOTTOM", 0, yOffset or 2)
+    text:SetPoint("BOTTOM", button, "BOTTOM", 0, (yOffset or 2) + ITEM_LEVEL_Y_OFFSET_ADJUST)
 
     return text
+end
+
+local function GetOverlayBackground(button, key)
+    local background = button[key]
+
+    if not background then
+        background = button:CreateTexture(nil, "ARTWORK")
+        background:SetTexture("Interface\\Buttons\\WHITE8X8")
+        background:Hide()
+        button[key] = background
+    end
+
+    return background
+end
+
+local function UpdateOverlayBackground(background, button, text, anchor)
+    local height = math.max(12, math.ceil((text:GetStringHeight() or 0) + LABEL_BACKGROUND_PADDING))
+
+    background:ClearAllPoints()
+    if anchor == "TOP" then
+        background:SetPoint("TOPLEFT", button, "TOPLEFT", LABEL_BACKGROUND_INSET, -LABEL_BACKGROUND_INSET)
+        background:SetPoint("TOPRIGHT", button, "TOPRIGHT", -LABEL_BACKGROUND_INSET, -LABEL_BACKGROUND_INSET)
+        background:SetHeight(height)
+        if background.SetGradient then
+            background:SetGradient("VERTICAL", BLACK_GRADIENT_CLEAR, BLACK_GRADIENT_TOP)
+        else
+            background:Hide()
+            return
+        end
+    else
+        background:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", LABEL_BACKGROUND_INSET, LABEL_BACKGROUND_INSET)
+        background:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -LABEL_BACKGROUND_INSET, LABEL_BACKGROUND_INSET)
+        background:SetHeight(height)
+        if background.SetGradient then
+            background:SetGradient("VERTICAL", BLACK_GRADIENT_TOP, BLACK_GRADIENT_CLEAR)
+        else
+            background:Hide()
+            return
+        end
+    end
+
+    background:Show()
 end
 
 local function GetBindOverlay(button)
@@ -86,6 +138,32 @@ local function GetBindOverlay(button)
     text:SetPoint("TOP", button, "TOP", 0, -1)
 
     return text
+end
+
+local function ShouldShowBindOverlayForQuality(quality)
+    return quality and quality > ITEM_QUALITY_COMMON
+end
+
+local function GetQualityColor(quality)
+    if quality ~= nil and C_Item and C_Item.GetItemQualityColor then
+        local r, g, b = C_Item.GetItemQualityColor(quality)
+        if r and g and b then
+            return r + (1 - r) * ITEM_LEVEL_QUALITY_LIGHTEN,
+                g + (1 - g) * ITEM_LEVEL_QUALITY_LIGHTEN,
+                b + (1 - b) * ITEM_LEVEL_QUALITY_LIGHTEN
+        end
+    end
+
+    return 1, 1, 1
+end
+
+local function GetItemQualityFromLink(itemLink)
+    if not itemLink then
+        return nil
+    end
+
+    local itemInfo = C_Item and C_Item.GetItemInfo and { C_Item.GetItemInfo(itemLink) } or { GetItemInfo(itemLink) }
+    return itemInfo[3]
 end
 
 local function QueueRefresh(source, button, isLink)
@@ -172,7 +250,8 @@ local function GetEquippedItemLevel(slotId, slotButton)
     end
 
     local itemLocation = ItemLocation:CreateFromEquipmentSlot(slotId)
-    return GetItemLevelFromLocation(itemLocation, slotButton)
+    local itemLevel = GetItemLevelFromLocation(itemLocation, slotButton)
+    return itemLevel, GetItemQualityFromLink(itemLink)
 end
 
 local function IsRelevantContainerItem(containerID, slotID)
@@ -192,11 +271,13 @@ end
 local function GetContainerItemLevel(containerID, slotID, button)
     if not IsRelevantContainerItem(containerID, slotID) then
         button.AngusUIItemLevelPending = nil
-        return nil
+        return nil, nil
     end
 
+    local containerItemInfo = C_Container and C_Container.GetContainerItemInfo and C_Container.GetContainerItemInfo(containerID, slotID)
     local itemLocation = ItemLocation:CreateFromBagAndSlot(containerID, slotID)
-    return GetItemLevelFromLocation(itemLocation, button)
+    local itemLevel = GetItemLevelFromLocation(itemLocation, button)
+    return itemLevel, containerItemInfo and containerItemInfo.quality or nil
 end
 
 local function GetBagItemLevel(itemButton)
@@ -222,6 +303,11 @@ local function GetContainerBindLabel(containerID, slotID, button)
         return nil
     end
 
+    if containerItemInfo and not ShouldShowBindOverlayForQuality(containerItemInfo.quality) then
+        button.AngusUIItemLevelPending = nil
+        return nil
+    end
+
     if itemLocation and itemLocation:IsValid() and C_Item and C_Item.IsBoundToAccountUntilEquip and C_Item.IsBoundToAccountUntilEquip(itemLocation) then
         return "WuE", 0.45, 0.85, 1
     end
@@ -239,8 +325,14 @@ local function GetContainerBindLabel(containerID, slotID, button)
     end
 
     local bindType = itemInfo[14]
+    local quality = itemInfo[3]
+    if not ShouldShowBindOverlayForQuality(quality) then
+        button.AngusUIItemLevelPending = nil
+        return nil
+    end
+
     if bindType == ITEM_BIND_ON_EQUIP then
-        return "BoE", 1, 0.82, 0
+        return "BoE", GetQualityColor(quality)
     end
 
     button.AngusUIItemLevelPending = nil
@@ -294,32 +386,40 @@ end
 
 local function GetFlyoutItemLevel(itemButton)
     local itemLink = GetFlyoutItemLink(itemButton)
-    return GetItemLevelFromLink(itemLink, itemButton)
+    local itemLevel = GetItemLevelFromLink(itemLink, itemButton)
+    return itemLevel, GetItemQualityFromLink(itemLink)
 end
 
-local function UpdateOverlay(button, itemLevel, fontSize, yOffset)
+local function UpdateOverlay(button, itemLevel, fontSize, yOffset, quality)
     local text = GetOverlay(button, fontSize, yOffset)
+    local background = GetOverlayBackground(button, "AngusUIItemLevelBackground")
 
     if itemLevel then
         text:SetText(itemLevel)
+        text:SetTextColor(GetQualityColor(quality))
         text:Show()
+        UpdateOverlayBackground(background, button, text, "BOTTOM")
     else
         text:SetText("")
         text:Hide()
+        background:Hide()
     end
 end
 
 local function UpdateBindOverlay(button, containerID, slotID)
     local text = GetBindOverlay(button)
+    local background = GetOverlayBackground(button, "AngusUIBindBackground")
     local label, r, g, b = GetContainerBindLabel(containerID, slotID, button)
 
     if label then
         text:SetText(label)
         text:SetTextColor(r or 1, g or 1, b or 1)
         text:Show()
+        UpdateOverlayBackground(background, button, text, "TOP")
     else
         text:SetText("")
         text:Hide()
+        background:Hide()
     end
 end
 
@@ -370,7 +470,8 @@ local function HookFrames(self)
 
     if BankPanelItemButtonMixin and not self.bankItemButtonHooked then
         hooksecurefunc(BankPanelItemButtonMixin, "Refresh", function(itemButton)
-            UpdateOverlay(itemButton, GetBankItemLevel(itemButton), 10, 1)
+            local itemLevel, quality = GetBankItemLevel(itemButton)
+            UpdateOverlay(itemButton, itemLevel, 10, 1, quality)
             UpdateBankBindOverlay(itemButton)
         end)
 
@@ -393,7 +494,8 @@ local function RefreshCharacterItemLevels()
         local slotButton = GetSlotButton(slotInfo.frameName)
 
         if slotButton then
-            UpdateOverlay(slotButton, GetEquippedItemLevel(slotInfo.slotId, slotButton), 11, 2)
+            local itemLevel, quality = GetEquippedItemLevel(slotInfo.slotId, slotButton)
+            UpdateOverlay(slotButton, itemLevel, 11, 2, quality)
         end
     end
 end
@@ -404,7 +506,8 @@ local function RefreshBagFrameItemLevels(frame)
     end
 
     for _, itemButton in frame:EnumerateValidItems() do
-        UpdateOverlay(itemButton, GetBagItemLevel(itemButton), 10, 1)
+        local itemLevel, quality = GetBagItemLevel(itemButton)
+        UpdateOverlay(itemButton, itemLevel, 10, 1, quality)
         UpdateBagBindOverlay(itemButton)
     end
 end
@@ -424,10 +527,14 @@ local function RefreshFlyoutItemLevels()
 
     for _, itemButton in ipairs(EquipmentFlyoutFrame.buttons) do
         if itemButton:IsShown() then
-            UpdateOverlay(itemButton, GetFlyoutItemLevel(itemButton), 10, 1)
+            local itemLevel, quality = GetFlyoutItemLevel(itemButton)
+            UpdateOverlay(itemButton, itemLevel, 10, 1, quality)
         elseif itemButton.AngusUIItemLevelText then
             itemButton.AngusUIItemLevelText:SetText("")
             itemButton.AngusUIItemLevelText:Hide()
+            if itemButton.AngusUIItemLevelBackground then
+                itemButton.AngusUIItemLevelBackground:Hide()
+            end
         end
     end
 end
@@ -438,7 +545,8 @@ local function RefreshBankItemOverlays()
     end
 
     for itemButton in BankPanel:EnumerateValidItems() do
-        UpdateOverlay(itemButton, GetBankItemLevel(itemButton), 10, 1)
+        local itemLevel, quality = GetBankItemLevel(itemButton)
+        UpdateOverlay(itemButton, itemLevel, 10, 1, quality)
         UpdateBankBindOverlay(itemButton)
     end
 end
