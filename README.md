@@ -56,6 +56,8 @@ Inconsolata.ttf  - Custom font for reward tables
 - **No build step:** edit files directly and `/reload` in-game
 - **Layout names:** pre-configure Edit Mode layouts named `angusui`,
   `angusui wide`, and `angusui 4k`
+- **Git setup:** run `git config --local core.fileMode false` in each clone to
+  ignore cross-platform executable-bit noise
 - **Seasonal updates:** reward tables, quest IDs, and item IDs are hard-coded
   and should be reviewed each patch/season
 
