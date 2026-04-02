@@ -5,8 +5,11 @@ function AngusUI:UI()
     if not layouts or not layouts.layouts then
         return
     end
-    
+
     local screenWidth, screenHeight = GetPhysicalScreenSize()
+    if not screenWidth or not screenHeight or screenHeight == 0 then
+        return
+    end
 
     if (layouts.activeLayout < 3) then
         return
@@ -14,28 +17,75 @@ function AngusUI:UI()
 
     local actualActiveLayout = layouts.activeLayout - 2
     local activeLayout = layouts.layouts[actualActiveLayout]
+    if not activeLayout or not activeLayout.layoutName then
+        return
+    end
+
     local activeLayoutName = activeLayout.layoutName:lower()
 
     if not activeLayoutName:find("angusui") then
         return
     end
 
-    local layoutToUse
-
-    if (screenWidth == 3840 or screenWidth == 2560) and (screenHeight == 2160 or screenHeight == 1440) then
-        layoutToUse = "angusui 4k"
-    else
-        local shouldUseWideLayout = (screenWidth / screenHeight) > 2
-
-        layoutToUse = shouldUseWideLayout and "angusui wide" or "angusui"
-    end
+    local screenRatio = screenWidth / screenHeight
+    local epsilon = 0.0001
+    local bestLayoutIndex
+    local bestLayoutName
+    local bestDistance
+    local bestRatioCount
+    local bestMatchedRatio
 
     for i, layout in ipairs(layouts.layouts) do
         local layoutName = layout.layoutName:lower()
+        local layoutRatioCount = 0
+        local layoutBestDistance
+        local layoutBestRatio
 
-        if layoutName:find("angusui") and (layoutName == layoutToUse) then
-            C_EditMode.SetActiveLayout(i + 2)
-            return
+        if layoutName:find("angusui") then
+            for width, height in layoutName:gmatch("(%d+):(%d+)") do
+                local ratioWidth = tonumber(width)
+                local ratioHeight = tonumber(height)
+
+                if ratioWidth and ratioHeight and ratioHeight ~= 0 then
+                    local distance = math.abs((ratioWidth / ratioHeight) - screenRatio)
+
+                    layoutRatioCount = layoutRatioCount + 1
+
+                    if not layoutBestDistance or distance < layoutBestDistance then
+                        layoutBestDistance = distance
+                        layoutBestRatio = width .. ":" .. height
+                    end
+                end
+            end
         end
+
+        if layoutBestDistance then
+            local isBetterMatch = not bestDistance or (layoutBestDistance < (bestDistance - epsilon))
+            local isEquallyClose = bestDistance and math.abs(layoutBestDistance - bestDistance) <= epsilon
+            local isMoreSpecific = isEquallyClose and layoutRatioCount < bestRatioCount
+
+            if isBetterMatch or isMoreSpecific then
+                bestLayoutIndex = i
+                bestLayoutName = layout.layoutName
+                bestDistance = layoutBestDistance
+                bestRatioCount = layoutRatioCount
+                bestMatchedRatio = layoutBestRatio
+            end
+        end
+    end
+
+    if not bestLayoutIndex then
+        return
+    end
+
+    local selectionKey = bestLayoutName .. "@" .. screenWidth .. "x" .. screenHeight
+
+    if (bestLayoutIndex + 2) ~= layouts.activeLayout then
+        C_EditMode.SetActiveLayout(bestLayoutIndex + 2)
+    end
+
+    if AngusUI.lastAutoSelectedLayout ~= selectionKey then
+        print("AngusUI: Selected layout \"" .. bestLayoutName .. "\" for " .. screenWidth .. "x" .. screenHeight .. " (matched " .. bestMatchedRatio .. ")")
+        AngusUI.lastAutoSelectedLayout = selectionKey
     end
 end
