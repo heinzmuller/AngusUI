@@ -13,6 +13,7 @@ Crests.lua
 FriendsFrame.lua
 MythicPlus.lua
 Reputations.lua
+PartyFrames.lua
 Settings.lua
 TalentRecommendations.lua
 Theme.lua

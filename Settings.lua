@@ -8,6 +8,7 @@ local defaultThemeButtonDarkness = 0.5
 local defaultThemeDesaturate = true
 local defaultWorldQuestRewardIcons = true
 local defaultWorldQuestUpgradeArrow = true
+local defaultHidePartyLabel = true
 
 function AngusUI:SettingsInit()
     if self.settingsInitialized then
@@ -32,6 +33,9 @@ function AngusUI:SettingsInit()
     end
     if AngusUIDB.worldQuestUpgradeArrow == nil then
         AngusUIDB.worldQuestUpgradeArrow = defaultWorldQuestUpgradeArrow
+    end
+    if AngusUIDB.hidePartyLabel == nil then
+        AngusUIDB.hidePartyLabel = defaultHidePartyLabel
     end
 
     local category = Settings.RegisterVerticalLayoutCategory("AngusUI")
@@ -98,9 +102,20 @@ function AngusUI:SettingsInit()
         AngusUIDB.worldQuestUpgradeArrow
     )
 
+    local hidePartyLabelSetting = Settings.RegisterAddOnSetting(
+        category,
+        "hidePartyLabel",
+        "hidePartyLabel",
+        AngusUIDB,
+        "boolean",
+        "Hide Party Label",
+        AngusUIDB.hidePartyLabel
+    )
+
     Settings.CreateCheckbox(category, themeDesaturateSetting, "Grayscale textures")
     Settings.CreateCheckbox(category, worldQuestRewardIconsSetting, "Replace world quest icons with reward icons")
     Settings.CreateCheckbox(category, worldQuestUpgradeArrowSetting, "Show upgrade arrow for better gear rewards")
+    Settings.CreateCheckbox(category, hidePartyLabelSetting, "Hide party frame label")
 
     local themeOptions = Settings.CreateSliderOptions and Settings.CreateSliderOptions(0, 1, 0.05)
         or { min = 0, max = 1, step = 0.05 }
@@ -146,6 +161,9 @@ function AngusUI:SettingsInit()
     end)
     worldQuestUpgradeArrowSetting:SetValueChangedCallback(function()
         AngusUI:QueueWorldQuestIconsRefresh(true)
+    end)
+    hidePartyLabelSetting:SetValueChangedCallback(function()
+        AngusUI:PartyFrames()
     end)
 
     UpdateThemeEnabled()
@@ -201,6 +219,7 @@ function AngusUI:SettingsInit()
     Settings.RegisterAddOnCategory(category)
 
     AngusUI:FriendsFrame()
+    AngusUI:PartyFrames()
     AngusUI:ApplyTheme()
     AngusUI:QueueWorldQuestIconsRefresh(true)
 end
