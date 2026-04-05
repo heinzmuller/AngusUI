@@ -4,7 +4,8 @@ local defaultPartyLabelText
 local defaultCompactPartyTitleText
 
 local function ShouldHidePartyLabel()
-    return AngusUIDB == nil or AngusUIDB.hidePartyLabel ~= false
+    local settingsDB = AngusUI.GetSettingsDB and AngusUI:GetSettingsDB() or nil
+    return settingsDB == nil or settingsDB.hidePartyLabel ~= false
 end
 
 local function GetPartyLabelText()

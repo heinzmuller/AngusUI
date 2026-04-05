@@ -10,6 +10,13 @@ local defaultWorldQuestRewardIcons = true
 local defaultWorldQuestUpgradeArrow = true
 local defaultHidePartyLabel = true
 
+function AngusUI:GetSettingsDB()
+    AngusUIDB = AngusUIDB or {}
+    AngusUIDB.settings = AngusUIDB.settings or {}
+
+    return AngusUIDB.settings
+end
+
 function AngusUI:SettingsInit()
     if self.settingsInitialized then
         return
@@ -17,25 +24,26 @@ function AngusUI:SettingsInit()
 
     self.settingsInitialized = true
 
-    AngusUIDB = AngusUIDB or {}
-    AngusUIDB.friendsFrameExtraWidth = AngusUIDB.friendsFrameExtraWidth or defaultFriendsExtraWidth
-    AngusUIDB.friendsFrameExtraHeight = AngusUIDB.friendsFrameExtraHeight or defaultFriendsExtraHeight
-    if AngusUIDB.themeEnabled == nil then
-        AngusUIDB.themeEnabled = defaultThemeEnabled
+    local settingsDB = self:GetSettingsDB()
+
+    settingsDB.friendsFrameExtraWidth = settingsDB.friendsFrameExtraWidth or defaultFriendsExtraWidth
+    settingsDB.friendsFrameExtraHeight = settingsDB.friendsFrameExtraHeight or defaultFriendsExtraHeight
+    if settingsDB.themeEnabled == nil then
+        settingsDB.themeEnabled = defaultThemeEnabled
     end
-    AngusUIDB.themeDarkness = AngusUIDB.themeDarkness or defaultThemeDarkness
-    AngusUIDB.themeButtonDarkness = AngusUIDB.themeButtonDarkness or defaultThemeButtonDarkness
-    if AngusUIDB.themeDesaturate == nil then
-        AngusUIDB.themeDesaturate = defaultThemeDesaturate
+    settingsDB.themeDarkness = settingsDB.themeDarkness or defaultThemeDarkness
+    settingsDB.themeButtonDarkness = settingsDB.themeButtonDarkness or defaultThemeButtonDarkness
+    if settingsDB.themeDesaturate == nil then
+        settingsDB.themeDesaturate = defaultThemeDesaturate
     end
-    if AngusUIDB.worldQuestRewardIcons == nil then
-        AngusUIDB.worldQuestRewardIcons = defaultWorldQuestRewardIcons
+    if settingsDB.worldQuestRewardIcons == nil then
+        settingsDB.worldQuestRewardIcons = defaultWorldQuestRewardIcons
     end
-    if AngusUIDB.worldQuestUpgradeArrow == nil then
-        AngusUIDB.worldQuestUpgradeArrow = defaultWorldQuestUpgradeArrow
+    if settingsDB.worldQuestUpgradeArrow == nil then
+        settingsDB.worldQuestUpgradeArrow = defaultWorldQuestUpgradeArrow
     end
-    if AngusUIDB.hidePartyLabel == nil then
-        AngusUIDB.hidePartyLabel = defaultHidePartyLabel
+    if settingsDB.hidePartyLabel == nil then
+        settingsDB.hidePartyLabel = defaultHidePartyLabel
     end
 
     local category = Settings.RegisterVerticalLayoutCategory("AngusUI")
@@ -44,10 +52,10 @@ function AngusUI:SettingsInit()
         category,
         "themeEnabled",
         "themeEnabled",
-        AngusUIDB,
+        settingsDB,
         "boolean",
         "Theme Tinting",
-        AngusUIDB.themeEnabled
+        settingsDB.themeEnabled
     )
 
     local themeEnabledControl = Settings.CreateCheckbox(category, themeEnabledSetting, "Enable UI tinting")
@@ -56,60 +64,60 @@ function AngusUI:SettingsInit()
         category,
         "themeDarkness",
         "themeDarkness",
-        AngusUIDB,
+        settingsDB,
         "number",
         "Theme Darkness",
-        AngusUIDB.themeDarkness
+        settingsDB.themeDarkness
     )
 
     local themeButtonDarknessSetting = Settings.RegisterAddOnSetting(
         category,
         "themeButtonDarkness",
         "themeButtonDarkness",
-        AngusUIDB,
+        settingsDB,
         "number",
         "Action Button Darkness",
-        AngusUIDB.themeButtonDarkness
+        settingsDB.themeButtonDarkness
     )
 
     local themeDesaturateSetting = Settings.RegisterAddOnSetting(
         category,
         "themeDesaturate",
         "themeDesaturate",
-        AngusUIDB,
+        settingsDB,
         "boolean",
         "Theme Desaturate",
-        AngusUIDB.themeDesaturate
+        settingsDB.themeDesaturate
     )
 
     local worldQuestRewardIconsSetting = Settings.RegisterAddOnSetting(
         category,
         "worldQuestRewardIcons",
         "worldQuestRewardIcons",
-        AngusUIDB,
+        settingsDB,
         "boolean",
         "World Quest Reward Icons",
-        AngusUIDB.worldQuestRewardIcons
+        settingsDB.worldQuestRewardIcons
     )
 
     local worldQuestUpgradeArrowSetting = Settings.RegisterAddOnSetting(
         category,
         "worldQuestUpgradeArrow",
         "worldQuestUpgradeArrow",
-        AngusUIDB,
+        settingsDB,
         "boolean",
         "World Quest Upgrade Arrow",
-        AngusUIDB.worldQuestUpgradeArrow
+        settingsDB.worldQuestUpgradeArrow
     )
 
     local hidePartyLabelSetting = Settings.RegisterAddOnSetting(
         category,
         "hidePartyLabel",
         "hidePartyLabel",
-        AngusUIDB,
+        settingsDB,
         "boolean",
         "Hide Party Label",
-        AngusUIDB.hidePartyLabel
+        settingsDB.hidePartyLabel
     )
 
     Settings.CreateCheckbox(category, themeDesaturateSetting, "Grayscale textures")
@@ -172,20 +180,20 @@ function AngusUI:SettingsInit()
         category,
         "friendsFrameExtraWidth",
         "friendsFrameExtraWidth",
-        AngusUIDB,
+        settingsDB,
         "number",
         "Friends Frame Extra Width",
-        AngusUIDB.friendsFrameExtraWidth
+        settingsDB.friendsFrameExtraWidth
     )
 
     local heightSetting = Settings.RegisterAddOnSetting(
         category,
         "friendsFrameExtraHeight",
         "friendsFrameExtraHeight",
-        AngusUIDB,
+        settingsDB,
         "number",
         "Friends Frame Extra Height",
-        AngusUIDB.friendsFrameExtraHeight
+        settingsDB.friendsFrameExtraHeight
     )
 
     local widthOptions = Settings.CreateSliderOptions and Settings.CreateSliderOptions(0, 300, 1)

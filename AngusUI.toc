@@ -9,6 +9,7 @@ AngusUI.lua
 Screenshots.lua
 ItemOverlays.lua
 CharacterPanel.lua
+Chores.lua
 Crests.lua
 FriendsFrame.lua
 MythicPlus.lua

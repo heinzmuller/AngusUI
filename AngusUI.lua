@@ -17,6 +17,8 @@ frame:RegisterEvent("PLAYER_LEVEL_UP")
 frame:RegisterEvent("ACHIEVEMENT_EARNED")
 frame:RegisterEvent("NEW_MOUNT_ADDED")
 frame:RegisterEvent("NEW_PET_ADDED")
+frame:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
+frame:RegisterEvent("UNIT_AURA")
 
 local function Set(list)
     local set = {}
@@ -32,6 +34,7 @@ local function SlashCommand(command)
         rep = function() AngusUI:Reputations() end,
         crests = function() AngusUI:Crests() end,
         ui = function() AngusUI:UI() end,
+        toast = function() AngusUI:ShowChoresToast(true) end,
     }
 
     if commands[command] then
@@ -50,6 +53,10 @@ function frame:ADDON_LOADED(self, addon)
     if (addon == "AngusUI") then
         if AngusUI.SettingsInit then
             AngusUI:SettingsInit()
+        end
+
+        if AngusUI.ChoresInit then
+            AngusUI:ChoresInit()
         end
     end
 
@@ -84,6 +91,19 @@ frame:SetScript(
             AngusUI:CharacterPanel()
             AngusUI:TalentRecommendations()
             AngusUI:PartyFrames()
+            if AngusUI.ChoresRefresh then
+                AngusUI:ChoresRefresh()
+            end
+            if AngusUI.QueueChoresGildedRefresh then
+                AngusUI:QueueChoresGildedRefresh()
+            end
+            AngusUI:ShowChoresToast()
+        end
+
+        if (event == "CURRENCY_DISPLAY_UPDATE") then
+            if AngusUI.ChoresHandleCurrencyUpdate then
+                AngusUI:ChoresHandleCurrencyUpdate(...)
+            end
         end
 
         if (event == "PLAYER_SPECIALIZATION_CHANGED") or (event == "PLAYER_ENTERING_WORLD") then
@@ -98,6 +118,8 @@ frame:SetScript(
 
         if
             (event == "PLAYER_ENTERING_WORLD") or
+            (event == "BAG_UPDATE_DELAYED") or
+            ((event == "UNIT_AURA") and (...) == "player") or
             (event == "PLAYER_EQUIPMENT_CHANGED") or
             (event == "GET_ITEM_INFO_RECEIVED") or
             (event == "QUEST_LOG_UPDATE") or
@@ -107,6 +129,9 @@ frame:SetScript(
             (event == "QUEST_WATCH_LIST_CHANGED")
         then
             AngusUI:QueueWorldQuestIconsRefresh()
+            if AngusUI.ChoresRefresh then
+                AngusUI:ChoresRefresh()
+            end
         end
 
         if (event == "MYTHIC_PLUS_CURRENT_AFFIX_UPDATE") then

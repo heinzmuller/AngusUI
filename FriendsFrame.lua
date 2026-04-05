@@ -3,7 +3,8 @@ local _, AngusUI = ...
 local baseSizes = nil
 
 function AngusUI:FriendsFrame()
-    if not FriendsFrame or not FriendsListFrame or not AngusUIDB then
+    local settingsDB = self.GetSettingsDB and self:GetSettingsDB() or nil
+    if not FriendsFrame or not FriendsListFrame or not settingsDB then
         return
     end
 
@@ -20,8 +21,8 @@ function AngusUI:FriendsFrame()
         }
     end
 
-    local extraWidth = AngusUIDB.friendsFrameExtraWidth or 50
-    local extraHeight = AngusUIDB.friendsFrameExtraHeight or 300
+    local extraWidth = settingsDB.friendsFrameExtraWidth or 50
+    local extraHeight = settingsDB.friendsFrameExtraHeight or 300
 
     FriendsFrame:SetWidth(baseSizes.frameWidth + extraWidth)
     FriendsFrame:SetHeight(baseSizes.frameHeight + extraHeight)

@@ -9,16 +9,17 @@ function AngusUI:Theme(forceReset)
     local darkness = defaultThemeDarkness
     local buttonDarkness = defaultThemeButtonDarkness
     local desaturateEnabled = true
+    local settingsDB = self.GetSettingsDB and self:GetSettingsDB() or nil
 
-    if AngusUIDB then
-        if AngusUIDB.themeEnabled ~= nil then
-            enabled = AngusUIDB.themeEnabled
+    if settingsDB then
+        if settingsDB.themeEnabled ~= nil then
+            enabled = settingsDB.themeEnabled
         end
 
-        darkness = AngusUIDB.themeDarkness or darkness
-        buttonDarkness = AngusUIDB.themeButtonDarkness or buttonDarkness
-        if AngusUIDB.themeDesaturate ~= nil then
-            desaturateEnabled = AngusUIDB.themeDesaturate
+        darkness = settingsDB.themeDarkness or darkness
+        buttonDarkness = settingsDB.themeButtonDarkness or buttonDarkness
+        if settingsDB.themeDesaturate ~= nil then
+            desaturateEnabled = settingsDB.themeDesaturate
         end
     end
 
@@ -96,7 +97,8 @@ function AngusUI:ApplyTheme()
         return
     end
 
-    local enabled = AngusUIDB and AngusUIDB.themeEnabled
+    local settingsDB = self.GetSettingsDB and self:GetSettingsDB() or nil
+    local enabled = settingsDB and settingsDB.themeEnabled
     if enabled == false and self.themeWasEnabled == nil then
         return
     end

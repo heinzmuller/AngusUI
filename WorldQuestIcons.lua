@@ -33,11 +33,13 @@ local worldMapPinTemplates = {
 local ShouldShowUpgradeArrow
 
 local function IsWorldQuestRewardsEnabled()
-    return AngusUIDB == nil or AngusUIDB.worldQuestRewardIcons ~= false
+    local settingsDB = AngusUI.GetSettingsDB and AngusUI:GetSettingsDB() or nil
+    return settingsDB == nil or settingsDB.worldQuestRewardIcons ~= false
 end
 
 local function IsWorldQuestUpgradeArrowEnabled()
-    return AngusUIDB == nil or AngusUIDB.worldQuestUpgradeArrow ~= false
+    local settingsDB = AngusUI.GetSettingsDB and AngusUI:GetSettingsDB() or nil
+    return settingsDB == nil or settingsDB.worldQuestUpgradeArrow ~= false
 end
 
 local function IsIgnoredRewardCurrency(currencyID)
