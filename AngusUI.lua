@@ -22,6 +22,8 @@ frame:RegisterEvent("UNIT_AURA")
 frame:RegisterEvent("TRADE_SKILL_SHOW")
 frame:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
 frame:RegisterEvent("TRADE_SKILL_DETAILS_UPDATE")
+frame:RegisterEvent("WEEKLY_REWARDS_UPDATE")
+frame:RegisterEvent("WEEKLY_REWARDS_ITEM_CHANGED")
 
 local function Set(list)
     local set = {}
@@ -29,6 +31,18 @@ local function Set(list)
         set[l] = true
     end
     return set
+end
+
+local ADDON_NAME = "|cff0f7a0fAngus|cff7be426UI|r"
+local PRINT_PREFIX = "|cff000000[|r" .. ADDON_NAME .. "|cff000000]|r"
+
+function AngusUI:Print(...)
+    if select("#", ...) == 0 then
+        print(PRINT_PREFIX)
+        return
+    end
+
+    print(PRINT_PREFIX .. " |cffffffff" .. strjoin(" ", tostringall(...)) .. "|r")
 end
 
 local function SlashCommand(command)
@@ -45,9 +59,9 @@ local function SlashCommand(command)
     if commands[command] then
         commands[command]()
     else
-        print("These are the commands you're looking for")
+        AngusUI:Print("These are the commands you're looking for")
         for availableCommand, _ in pairs(commands) do
-            print("/aui " .. availableCommand)
+            AngusUI:Print("/aui " .. availableCommand)
         end
     end
 end
@@ -62,6 +76,10 @@ function frame:ADDON_LOADED(self, addon)
 
         if AngusUI.ChoresInit then
             AngusUI:ChoresInit()
+        end
+
+        if AngusUI.SyncInit then
+            AngusUI:SyncInit()
         end
     end
 
@@ -97,18 +115,24 @@ frame:SetScript(
             AngusUI:CharacterPanel()
             AngusUI:TalentRecommendations()
             AngusUI:PartyFrames()
-            if AngusUI.ChoresRefresh then
-                AngusUI:ChoresRefresh()
+            if AngusUI.SyncRefresh then
+                AngusUI:SyncRefresh()
             end
-            if AngusUI.QueueChoresGildedRefresh then
-                AngusUI:QueueChoresGildedRefresh()
+            if AngusUI.QueueSyncGildedRefresh then
+                AngusUI:QueueSyncGildedRefresh()
             end
             AngusUI:ShowChoresToast()
         end
 
         if (event == "CURRENCY_DISPLAY_UPDATE") then
-            if AngusUI.ChoresHandleCurrencyUpdate then
-                AngusUI:ChoresHandleCurrencyUpdate(...)
+            if AngusUI.SyncHandleCurrencyUpdate then
+                AngusUI:SyncHandleCurrencyUpdate(...)
+            end
+        end
+
+        if (event == "WEEKLY_REWARDS_UPDATE") or (event == "WEEKLY_REWARDS_ITEM_CHANGED") then
+            if AngusUI.SyncRefresh then
+                AngusUI:SyncRefresh()
             end
         end
 
@@ -117,8 +141,8 @@ frame:SetScript(
             (event == "TRADE_SKILL_DATA_SOURCE_CHANGED") or
             (event == "TRADE_SKILL_DETAILS_UPDATE")
         then
-            if AngusUI.ChoresRefresh then
-                AngusUI:ChoresRefresh(true)
+            if AngusUI.SyncRefresh then
+                AngusUI:SyncRefresh(true)
             end
         end
 
@@ -145,8 +169,8 @@ frame:SetScript(
             (event == "QUEST_WATCH_LIST_CHANGED")
         then
             AngusUI:QueueWorldQuestIconsRefresh()
-            if AngusUI.ChoresRefresh then
-                AngusUI:ChoresRefresh()
+            if AngusUI.SyncRefresh then
+                AngusUI:SyncRefresh()
             end
         end
 

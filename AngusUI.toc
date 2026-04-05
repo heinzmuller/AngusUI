@@ -1,5 +1,5 @@
 ## Interface: 110207, 120000, 120001
-## Title: Angus|cffcc00ffUI|r
+## Title: |cff0f7a0fAngus|cff7be426UI|r
 ## Author: Angusdonals-Frostwhisper
 ## Version: 12.0.0
 ## Notes: Angus UI.
@@ -11,6 +11,7 @@ Screenshots.lua
 ItemOverlays.lua
 CharacterPanel.lua
 Chores.lua
+Sync.lua
 Crests.lua
 FriendsFrame.lua
 MythicPlus.lua

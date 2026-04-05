@@ -71,7 +71,7 @@ function AngusUI:TeleportBack()
     local equippedItemId = GetInventoryItemID("player", 15)
 
     if not equippedItemId then
-        print("AngusUI: No back item equipped")
+        AngusUI:Print("No back item equipped")
         return
     end
 
@@ -82,7 +82,7 @@ function AngusUI:TeleportBack()
             local bag, slot = FindItemByGuid(nonTeleportBack)
 
             if not EquipBackFromBag(bag, slot) then
-                print("AngusUI: Original back item not found")
+                AngusUI:Print("Original back item not found")
             end
         end
     else
@@ -95,7 +95,7 @@ function AngusUI:TeleportBack()
         local bag, slot = FindTeleportBack()
 
         if not EquipBackFromBag(bag, slot) then
-            print("AngusUI: No available teleport back found")
+            AngusUI:Print("No available teleport back found")
         end
     end
 end

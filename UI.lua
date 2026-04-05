@@ -85,7 +85,7 @@ function AngusUI:UI()
     end
 
     if AngusUI.lastAutoSelectedLayout ~= selectionKey then
-        print("AngusUI: Selected layout \"" .. bestLayoutName .. "\" for " .. screenWidth .. "x" .. screenHeight .. " (matched " .. bestMatchedRatio .. ")")
+        AngusUI:Print("Selected layout \"" .. bestLayoutName .. "\" for " .. screenWidth .. "x" .. screenHeight .. " (matched " .. bestMatchedRatio .. ")")
         AngusUI.lastAutoSelectedLayout = selectionKey
     end
 end

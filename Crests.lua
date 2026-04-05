@@ -140,7 +140,7 @@ function AngusUI:Crests()
         local wasEarnedByMe = achievementInfo.wasEarnedByMe
         
         if not name then
-            print("AngusUI: Warning - Achievement " .. achievementId .. " not found")
+            AngusUI:Print("Warning - Achievement " .. achievementId .. " not found")
             return
         end
         
