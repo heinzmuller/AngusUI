@@ -45,6 +45,14 @@ local recommendations = {
                 { key = "delves", title = "Delves", stats = "Agility >> Crit > Mastery >> Haste > Versatility", talentCode = "CEkAAAAAAAAAAAAAAAAAAAAAAYmZmZmZ2mxMzMGzkxMDAAAAAAYWMmtZYmBmx2sNzMjxALDsNbmxwsopxMzYGbAAAADAAAgZGMAAAAM" },
             },
         },
+        [1480] = {
+            title = "Devourer Demon Hunter",
+            tabs = {
+                { key = "raid", title = "Raid", stats = "Intellect > Haste >= Mastery >> Crit >> Versatility", talentCode = "CgcBAAAAAAAAAAAAAAAAAAAAAAA2MmZmxMzMGzMAAAAAAAegxsNYGAAAAAAAAmxMMmZmZMzMzYmFzYsotNmZmZ2abmZGADDABmZGMmB" },
+                { key = "mythicplus", title = "Mythic+", stats = "Intellect > Haste = Mastery >> Crit >> Versatility", talentCode = "CgcBAAAAAAAAAAAAAAAAAAAAAAA2mxMzMzMzMGmBAAAAAAgxsNYGAAAAAAAAmxMMmZmZmZmZGzsYGjFtsxMzMzWLzMzAYYAIwMGMmB" },
+                { key = "delves", title = "Delves", stats = "Intellect > Mastery > Haste >> Crit >> Versatility", talentCode = "CgcBAAAAAAAAAAAAAAAAAAAAAAA2MmZmxMzMGzMAAAAAAALzYADAAAAAAAAmxMMmZmZmZmZYmtZGjNZDABMAzMzMzyMz0sNz2MzYMzA" },
+            },
+        },
         [581] = {
             title = "Vengeance Demon Hunter",
             tabs = {

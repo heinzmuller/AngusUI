@@ -140,6 +140,45 @@ local function GetBindOverlay(button)
     return text
 end
 
+local function GetSpecialHighlight(button)
+    return button and button.AngusUISpecialHighlight
+end
+
+local function FindSpecialHighlight(button)
+    return button and (button.AngusUISpecialHighlight or button.SpellHighlight or button.spellHighlight or button.overlay)
+end
+
+local function SetSpecialHighlight(button, shown)
+    if not button then
+        return
+    end
+
+    local highlight = GetSpecialHighlight(button)
+
+    if shown then
+        if highlight and highlight:IsShown() then
+            return
+        end
+
+        if ActionButton_ShowOverlayGlow then
+            ActionButton_ShowOverlayGlow(button)
+            button.AngusUISpecialHighlight = FindSpecialHighlight(button)
+        end
+
+        return
+    end
+
+    if not highlight then
+        return
+    end
+
+    if ActionButton_HideOverlayGlow then
+        ActionButton_HideOverlayGlow(button)
+    else
+        highlight:Hide()
+    end
+end
+
 local function ShouldShowBindOverlayForQuality(quality)
     return quality and quality > ITEM_QUALITY_COMMON
 end
@@ -309,7 +348,7 @@ local function GetContainerBindLabel(containerID, slotID, button)
     end
 
     if itemLocation and itemLocation:IsValid() and C_Item and C_Item.IsBoundToAccountUntilEquip and C_Item.IsBoundToAccountUntilEquip(itemLocation) then
-        return "WuE", 0.45, 0.85, 1
+        return "WuE", 0.45, 0.85, 1, true
     end
 
     local itemLink = C_Container and C_Container.GetContainerItemLink and C_Container.GetContainerItemLink(containerID, slotID)
@@ -332,7 +371,8 @@ local function GetContainerBindLabel(containerID, slotID, button)
     end
 
     if bindType == ITEM_BIND_ON_EQUIP then
-        return "BoE", GetQualityColor(quality)
+        local r, g, b = GetQualityColor(quality)
+        return "BoE", r, g, b, false
     end
 
     button.AngusUIItemLevelPending = nil
@@ -409,7 +449,7 @@ end
 local function UpdateBindOverlay(button, containerID, slotID)
     local text = GetBindOverlay(button)
     local background = GetOverlayBackground(button, "AngusUIBindBackground")
-    local label, r, g, b = GetContainerBindLabel(containerID, slotID, button)
+    local label, r, g, b, shouldHighlight = GetContainerBindLabel(containerID, slotID, button)
 
     if label then
         text:SetText(label)
@@ -421,6 +461,8 @@ local function UpdateBindOverlay(button, containerID, slotID)
         text:Hide()
         background:Hide()
     end
+
+    SetSpecialHighlight(button, shouldHighlight == true)
 end
 
 local function UpdateBagBindOverlay(button)

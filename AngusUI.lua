@@ -27,10 +27,14 @@ local function Set(list)
 end
 
 local function SlashCommand(command)
+    command = command and strtrim(command):lower() or ""
+
     local commands = {
         back = function() AngusUI:TeleportBack() end,
         rep = function() AngusUI:Reputations() end,
         crests = function() AngusUI:Crests() end,
+        delve = function() AngusUI:DelvesCommand() end,
+        delves = function() AngusUI:DelvesCommand() end,
         ui = function() AngusUI:UI() end,
     }
 
@@ -62,6 +66,10 @@ function frame:ADDON_LOADED(self, addon)
         AngusUI:CharacterPanel()
     end
 
+    if (addon == "Blizzard_DelvesDifficultyPicker") then
+        AngusUI:Delves()
+    end
+
     if (addon == "Blizzard_PlayerSpells") then
         AngusUI:TalentRecommendations()
     end
@@ -75,9 +83,11 @@ frame:SetScript(
         end
 
         if (event == "PLAYER_ENTERING_WORLD") then
+            AngusUI:EnableActionRangeOverlay()
             AngusUI:ApplyTheme()
             AngusUI:FriendsFrame()
             AngusUI:CharacterPanel()
+            AngusUI:Delves()
             AngusUI:TalentRecommendations()
         end
 
@@ -102,6 +112,7 @@ frame:SetScript(
             (event == "QUEST_WATCH_LIST_CHANGED")
         then
             AngusUI:QueueWorldQuestIconsRefresh()
+            AngusUI:Delves()
         end
 
         if (event == "MYTHIC_PLUS_CURRENT_AFFIX_UPDATE") then

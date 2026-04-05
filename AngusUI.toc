@@ -6,12 +6,14 @@
 ## SavedVariables: AngusUIDB
 
 AngusUI.lua
+ActionRangeOverlay.lua
 Screenshots.lua
 ItemOverlays.lua
 CharacterPanel.lua
 Crests.lua
 FriendsFrame.lua
 MythicPlus.lua
+Delves.lua
 Reputations.lua
 Settings.lua
 TalentRecommendations.lua
