@@ -6,6 +6,7 @@
 ## SavedVariables: AngusUIDB
 
 AngusUI.lua
+ActionRangeOverlay.lua
 Screenshots.lua
 ItemOverlays.lua
 CharacterPanel.lua

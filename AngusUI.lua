@@ -32,6 +32,8 @@ local function Set(list)
 end
 
 local function SlashCommand(command)
+    command = command and strtrim(command):lower() or ""
+
     local commands = {
         back = function() AngusUI:TeleportBack() end,
         rep = function() AngusUI:Reputations() end,
@@ -89,6 +91,7 @@ frame:SetScript(
         end
 
         if (event == "PLAYER_ENTERING_WORLD") then
+            AngusUI:EnableActionRangeOverlay()
             AngusUI:ApplyTheme()
             AngusUI:FriendsFrame()
             AngusUI:CharacterPanel()
