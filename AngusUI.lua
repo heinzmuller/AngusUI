@@ -19,6 +19,9 @@ frame:RegisterEvent("NEW_MOUNT_ADDED")
 frame:RegisterEvent("NEW_PET_ADDED")
 frame:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
 frame:RegisterEvent("UNIT_AURA")
+frame:RegisterEvent("TRADE_SKILL_SHOW")
+frame:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
+frame:RegisterEvent("TRADE_SKILL_DETAILS_UPDATE")
 
 local function Set(list)
     local set = {}
@@ -103,6 +106,16 @@ frame:SetScript(
         if (event == "CURRENCY_DISPLAY_UPDATE") then
             if AngusUI.ChoresHandleCurrencyUpdate then
                 AngusUI:ChoresHandleCurrencyUpdate(...)
+            end
+        end
+
+        if
+            (event == "TRADE_SKILL_SHOW") or
+            (event == "TRADE_SKILL_DATA_SOURCE_CHANGED") or
+            (event == "TRADE_SKILL_DETAILS_UPDATE")
+        then
+            if AngusUI.ChoresRefresh then
+                AngusUI:ChoresRefresh(true)
             end
         end
 
