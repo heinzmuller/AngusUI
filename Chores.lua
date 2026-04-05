@@ -10,13 +10,10 @@ local toastDurationSeconds = 5
 local gildedStashWidgetID = 7591
 local gildedStashCurrencyID = 3290
 local cofferKeyShardsCurrencyID = 3310
-local restoredCofferKeyCurrencyID = 3028
 local cofferKeyShardsWeeklyMaximum = 600
 local firstWorldBossQuestIDs = { 92127, 92128, 92129, 92130 }
 local nightmareTaskQuestID = 94446
-local trovehunterBountyQuestID = 86371
 local trovehunterBountyAuraSpellID = 1254631
-local trovehunterBountyItemIDs = { 252415, 233071, 265714 }
 local professionChoreData = {
     [Enum.ExpansionLevel.WarWithin] = {
         { name = "Alchemy", spellID = 423321, treatise = { 83725 }, weekly = { 84133 }, treasures = { { 83253 }, { 83255 } } },
@@ -169,10 +166,6 @@ local function GetStatusColor(complete, statusText)
     return 1, 0.35, 0.35
 end
 
-local function ColorizeText(hexColor, text)
-    return "|cff" .. hexColor .. text .. "|r"
-end
-
 local function GetGildedStashCountFromWidget()
     if not C_UIWidgetManager or not C_UIWidgetManager.GetSpellDisplayVisualizationInfo then
         return nil
@@ -220,6 +213,28 @@ local function GetCurrencyInfoByID(currencyID)
     end
 
     return C_CurrencyInfo.GetCurrencyInfo(currencyID)
+end
+
+local function GetProfessionConcentrationCurrencyID(info)
+    if not C_TradeSkillUI or not C_TradeSkillUI.GetConcentrationCurrencyID or not info then
+        return nil
+    end
+
+    local candidateIDs = {
+        info.professionID,
+        info.parentProfessionID,
+    }
+
+    for _, candidateID in ipairs(candidateIDs) do
+        if candidateID then
+            local currencyID = C_TradeSkillUI.GetConcentrationCurrencyID(candidateID)
+            if currencyID then
+                return currencyID
+            end
+        end
+    end
+
+    return nil
 end
 
 local function SetValue(target, key, value)
@@ -270,16 +285,6 @@ local function GetWeeklyResetKey()
     end
 
     return floor((time() + secondsUntilReset) / 3600)
-end
-
-local function GetItemCountByIDs(itemIDs)
-    local count = 0
-
-    for _, itemID in ipairs(itemIDs or {}) do
-        count = count + (C_Item and C_Item.GetItemCount and C_Item.GetItemCount(itemID, false, true, true) or 0)
-    end
-
-    return count
 end
 
 local function HasTrovehunterAura()
@@ -473,11 +478,12 @@ function AngusUI:BuildChoresRows()
     local worldBossComplete = accountData and accountData.firstWorldBoss == true
     table.insert(rows, CreateRowData("worldBoss", "World Boss", worldBossComplete, worldBossComplete and "Done" or "Pending", 10, { groupStart = true }))
 
-    local nightmarePreyData = characterData and characterData.nightmarePrey or {}
-    local nightmarePreysCompleted = nightmarePreyData.completed or 0
-    local nightmarePreysTotal = nightmarePreyData.max or 4
-    local nightmareWeeklyComplete = nightmarePreyData.weeklyCompleted == true
-    table.insert(rows, CreateRowData("nightmarePreys", "Nightmare Preys", nightmareWeeklyComplete, nightmarePreysCompleted .. "/" .. nightmarePreysTotal, 20, { groupStart = true }))
+    local preyData = characterData and characterData.prey or {}
+    local nightmareHuntsCompleted = math.max(0, math.min(preyData.nightmare or 0, 4))
+    local preyWeeklyComplete = preyData.weekly == true
+    local preyComplete = nightmareHuntsCompleted >= 4 and preyWeeklyComplete
+    table.insert(rows, CreateRowData("prey-nightmare", "Prey", nightmareHuntsCompleted >= 4, nightmareHuntsCompleted .. "/4 Nightmare Hunts", 20, { groupStart = true, sortComplete = preyComplete }))
+    table.insert(rows, CreateRowData("prey-weekly", "", preyWeeklyComplete, "Weekly", 21, { hideBullet = true, sortComplete = preyComplete }))
 
     local hasProfessionRows = false
     local professionSnapshot = characterData and characterData.professions or {}
@@ -487,9 +493,8 @@ function AngusUI:BuildChoresRows()
             hasProfessionRows = true
             local treatiseComplete = professionData.treatise == true
             local weeklyComplete = professionData.weekly == true
-            local treasureCompleted = professionData.treasuresCompleted or 0
-            local treasureTotal = professionData.treasuresTotal or 0
-            local treasureComplete = treasureTotal == 0 or treasureCompleted >= treasureTotal
+            local treasuresRemaining = math.max(0, professionData.treasuresRemaining or 0)
+            local treasureComplete = treasuresRemaining <= 0
             local professionComplete = treatiseComplete and weeklyComplete and treasureComplete
             local baseSortOrder = 100 + (index * 10)
 
@@ -519,7 +524,7 @@ function AngusUI:BuildChoresRows()
                 "profession-" .. profession.name .. "-treasures",
                 "",
                 treasureComplete,
-                "Treasures " .. treasureCompleted .. "/" .. treasureTotal,
+                "Treasures Remaining: " .. treasuresRemaining,
                 baseSortOrder + 2,
                 { sortComplete = professionComplete, hideBullet = true }
             ))
@@ -531,26 +536,16 @@ function AngusUI:BuildChoresRows()
     end
 
     local delveData = characterData and characterData.delves or {}
-    local gildedStashesMax = delveData.gildedStashesMax or 4
-    local shownGildedStashes = math.max(0, math.min(delveData.gildedStashes or 0, gildedStashesMax))
-    local gildedComplete = shownGildedStashes >= gildedStashesMax
-    local gildedStatus = "Gilded Stashes " .. shownGildedStashes .. "/" .. gildedStashesMax
-    local trovehunterLooted = delveData.trovehunterLooted == true
-    local trovehunterUsed = delveData.trovehunterUsed == true
-    local trovehunterOwned = delveData.trovehunterOwned == true
-    local lootedText = ColorizeText(trovehunterLooted and "33e65a" or "ff5959", "Looted")
-    local usedColor = "ff5959"
-    if trovehunterUsed then
-        usedColor = "33e65a"
-    elseif trovehunterLooted and not trovehunterOwned then
-        usedColor = "ffd133"
-    end
-    local usedText = ColorizeText(usedColor, "Used")
-    local trovehunterStatus = "Trovehunter's Bounty  " .. lootedText .. "  " .. usedText
-    local delveComplete = gildedComplete and trovehunterUsed
+    local gildedStashesLooted = math.max(0, math.min(delveData.gildedStashesLooted or 0, 4))
+    local trovehuntersBounty = delveData.trovehuntersBounty == true
+    local cofferKeyShardsRemaining = math.max(0, delveData.cofferKeyShardsRemaining or cofferKeyShardsWeeklyMaximum)
+    local gildedComplete = gildedStashesLooted >= 4
+    local cofferKeysComplete = cofferKeyShardsRemaining <= 0
+    local delveComplete = gildedComplete and trovehuntersBounty and cofferKeysComplete
 
-    table.insert(rows, CreateRowData("delve-gildedStashes", "Delve", gildedComplete, gildedStatus, 300, { groupStart = true, sortComplete = delveComplete }))
-    table.insert(rows, CreateRowData("delve-trovehuntersBounty", "", trovehunterUsed, trovehunterStatus, 301, { hideBullet = true, sortComplete = delveComplete, inlineStatusColors = true }))
+    table.insert(rows, CreateRowData("delve-gildedStashesLooted", "Delve", gildedComplete, "Gilded Stashes looted: " .. gildedStashesLooted, 300, { groupStart = true, sortComplete = delveComplete }))
+    table.insert(rows, CreateRowData("delve-trovehuntersBounty", "", trovehuntersBounty, "Trovehunter's Bounty: " .. tostring(trovehuntersBounty), 301, { hideBullet = true, sortComplete = delveComplete }))
+    table.insert(rows, CreateRowData("delve-cofferKeyShardsRemaining", "", cofferKeysComplete, "Coffer Key Shards remaining until weekly limit: " .. cofferKeyShardsRemaining, 302, { hideBullet = true, sortComplete = delveComplete }))
 
     table.sort(rows, CompareRows)
 
@@ -584,45 +579,6 @@ function AngusUI:GetChoresDB()
     return AngusUIDB.chores
 end
 
-function AngusUI:MigrateLegacyChoresCharacterData(characterData, characterKey, choresDB)
-    local legacyRootCharacters = AngusUIDB.characters
-    if legacyRootCharacters and type(legacyRootCharacters[characterKey]) == "table" then
-        local legacyRootData = legacyRootCharacters[characterKey]
-        if type(legacyRootData.cofferKeys) == "table" and characterData.cofferKeys == nil then
-            characterData.cofferKeys = legacyRootData.cofferKeys
-        end
-        if legacyRootData.lastChanged and not characterData.lastChanged then
-            characterData.lastChanged = legacyRootData.lastChanged
-        end
-        if legacyRootData.lastChangedResetKey and not characterData.lastChangedResetKey then
-            characterData.lastChangedResetKey = legacyRootData.lastChangedResetKey
-        end
-
-        legacyRootCharacters[characterKey] = nil
-        if next(legacyRootCharacters) == nil then
-            AngusUIDB.characters = nil
-        end
-    end
-
-    local legacyCharacterKey = GetCharacterKey()
-    if legacyCharacterKey and legacyCharacterKey ~= characterKey and type(choresDB.characters[legacyCharacterKey]) == "table" then
-        local legacyCharacterData = choresDB.characters[legacyCharacterKey]
-        characterData.delves = characterData.delves or {}
-
-        if characterData.weeklyResetKey == nil and legacyCharacterData.weeklyResetKey ~= nil then
-            characterData.weeklyResetKey = legacyCharacterData.weeklyResetKey
-        end
-        if characterData.delves.gildedStashes == nil and legacyCharacterData.gildedStashes ~= nil then
-            characterData.delves.gildedStashes = legacyCharacterData.gildedStashes
-        end
-        if characterData.delves.trovehunterUsed == nil and legacyCharacterData.trovehunterUsed ~= nil then
-            characterData.delves.trovehunterUsed = legacyCharacterData.trovehunterUsed == true
-        end
-
-        choresDB.characters[legacyCharacterKey] = nil
-    end
-end
-
 function AngusUI:GetChoresCharacterData()
     local choresDB = self:GetChoresDB()
     local characterKey = GetCharacterStorageKey()
@@ -636,11 +592,8 @@ function AngusUI:GetChoresCharacterData()
         choresDB.characters[characterKey] = characterData
     end
 
-    self:MigrateLegacyChoresCharacterData(characterData, characterKey, choresDB)
-
-    characterData.cofferKeys = characterData.cofferKeys or {}
     characterData.delves = characterData.delves or {}
-    characterData.nightmarePrey = characterData.nightmarePrey or {}
+    characterData.prey = characterData.prey or {}
     characterData.professions = characterData.professions or {}
 
     return characterData
@@ -653,39 +606,7 @@ function AngusUI:GetChoresAccountData()
     return choresDB.account
 end
 
-function AngusUI:UpdateCharacterCofferKeyData(characterData)
-    local cofferKeyData = characterData.cofferKeys
-    local shardInfo = GetCurrencyInfoByID(cofferKeyShardsCurrencyID)
-    local restoredKeyInfo = GetCurrencyInfoByID(restoredCofferKeyCurrencyID)
-    local changed = false
-
-    local shards = cofferKeyData.shards or 0
-    local restored = cofferKeyData.restored or 0
-    local weeklyMaxHit = cofferKeyData.weeklyMaxHit == true
-
-    if shardInfo then
-        shards = shardInfo.quantity or 0
-
-        local weeklyMaximum = shardInfo.maxWeeklyQuantity or 0
-        if weeklyMaximum <= 0 then
-            weeklyMaximum = cofferKeyShardsWeeklyMaximum
-        end
-
-        weeklyMaxHit = weeklyMaximum > 0 and (shardInfo.quantityEarnedThisWeek or 0) >= weeklyMaximum
-    end
-
-    if restoredKeyInfo then
-        restored = restoredKeyInfo.quantity or 0
-    end
-
-    changed = SetValue(cofferKeyData, "shards", shards) or changed
-    changed = SetValue(cofferKeyData, "restored", restored) or changed
-    changed = SetValue(cofferKeyData, "weeklyMaxHit", weeklyMaxHit) or changed
-
-    return changed
-end
-
-function AngusUI:BuildProfessionSnapshot()
+function AngusUI:BuildProfessionSnapshot(existingProfessions)
     local professions = {}
 
     for _, profession in ipairs(GetCurrentProfessionChoreData()) do
@@ -693,12 +614,13 @@ function AngusUI:BuildProfessionSnapshot()
             local treatiseComplete = profession.treatise and IsAnyQuestComplete(profession.treatise) or true
             local weeklyComplete = profession.weekly and IsAnyQuestComplete(profession.weekly) or true
             local treasureCompleted, treasureTotal = CountCompletedSources(profession.treasures)
+            local previousProfessionData = existingProfessions and existingProfessions[profession.name]
 
             professions[profession.name] = {
                 treatise = treatiseComplete,
                 weekly = weeklyComplete,
-                treasuresCompleted = treasureCompleted,
-                treasuresTotal = treasureTotal,
+                treasuresRemaining = math.max(treasureTotal - treasureCompleted, 0),
+                concentration = previousProfessionData and previousProfessionData.concentration or nil,
             }
         end
     end
@@ -706,44 +628,112 @@ function AngusUI:BuildProfessionSnapshot()
     return professions
 end
 
-function AngusUI:UpdateCharacterDelvesData(characterData)
-    local delvesData = characterData.delves
-    local changed = false
-    local gildedStashes = GetGildedStashCountFromWidget()
-    if gildedStashes == nil then
-        gildedStashes = delvesData.gildedStashes or 0
+function AngusUI:GetProfessionConcentrationSnapshot()
+    if not C_TradeSkillUI or not C_TradeSkillUI.GetChildProfessionInfos then
+        return nil
     end
 
-    local ownedCount = GetItemCountByIDs(trovehunterBountyItemIDs)
-    local trovehunterOwned = ownedCount > 0
-    local trovehunterActive = HasTrovehunterAura()
-    local trovehunterLooted = IsQuestComplete(trovehunterBountyQuestID) or trovehunterOwned or trovehunterActive
-    local trovehunterUsed = trovehunterActive or delvesData.trovehunterUsed == true
+    local professionInfos = C_TradeSkillUI.GetChildProfessionInfos()
+    if not professionInfos then
+        return nil
+    end
 
-    changed = SetValue(delvesData, "gildedStashes", math.max(0, math.min(gildedStashes, 4))) or changed
-    changed = SetValue(delvesData, "gildedStashesMax", 4) or changed
-    changed = SetValue(delvesData, "trovehunterLooted", trovehunterLooted) or changed
-    changed = SetValue(delvesData, "trovehunterUsed", trovehunterUsed) or changed
-    changed = SetValue(delvesData, "trovehunterOwned", trovehunterOwned) or changed
+    local concentrationSnapshot = {}
+    local timestamp = time()
 
-    return changed
+    for _, professionInfo in ipairs(professionInfos) do
+        local professionName = professionInfo and professionInfo.professionName
+        local currencyID = GetProfessionConcentrationCurrencyID(professionInfo)
+        local currencyInfo = currencyID and GetCurrencyInfoByID(currencyID)
+        if professionName and currencyInfo then
+            concentrationSnapshot[professionName] = {
+                current = currencyInfo.quantity or 0,
+                timestamp = timestamp,
+            }
+        end
+    end
+
+    local skillLineID, skillLineDisplayName, _, _, _, parentSkillLineID, parentSkillLineDisplayName = C_TradeSkillUI.GetTradeSkillLine and C_TradeSkillUI.GetTradeSkillLine() or nil
+    local currentProfessionName = parentSkillLineDisplayName or skillLineDisplayName
+    if currentProfessionName then
+        local fallbackCurrencyID = nil
+        if C_TradeSkillUI.GetConcentrationCurrencyID then
+            fallbackCurrencyID = skillLineID and C_TradeSkillUI.GetConcentrationCurrencyID(skillLineID) or nil
+            if not fallbackCurrencyID and parentSkillLineID then
+                fallbackCurrencyID = C_TradeSkillUI.GetConcentrationCurrencyID(parentSkillLineID)
+            end
+        end
+
+        local fallbackCurrencyInfo = fallbackCurrencyID and GetCurrencyInfoByID(fallbackCurrencyID)
+        if fallbackCurrencyInfo then
+            concentrationSnapshot[currentProfessionName] = {
+                current = fallbackCurrencyInfo.quantity or 0,
+                timestamp = timestamp,
+            }
+        end
+    end
+
+    return next(concentrationSnapshot) and concentrationSnapshot or nil
 end
 
-function AngusUI:UpdateCharacterNightmarePreyData(characterData)
-    local nightmarePreyData = characterData.nightmarePrey
-    local completed = math.min(CountCompletedQuests(nightmarePreyQuestIDs), 4)
-    local weeklyCompleted = IsQuestComplete(nightmareTaskQuestID) or completed >= 3
-    local changed = false
+function AngusUI:UpdateCharacterDelvesData(characterData)
+    local existingDelvesData = characterData.delves or {}
+    local gildedStashesLooted = GetGildedStashCountFromWidget()
+    if gildedStashesLooted == nil then
+        gildedStashesLooted = existingDelvesData.gildedStashesLooted or 0
+    end
 
-    changed = SetValue(nightmarePreyData, "completed", completed) or changed
-    changed = SetValue(nightmarePreyData, "max", 4) or changed
-    changed = SetValue(nightmarePreyData, "weeklyCompleted", weeklyCompleted) or changed
+    local trovehuntersBounty = HasTrovehunterAura() or existingDelvesData.trovehuntersBounty == true
+    local cofferKeyShardsRemaining = existingDelvesData.cofferKeyShardsRemaining
+    if cofferKeyShardsRemaining == nil then
+        cofferKeyShardsRemaining = cofferKeyShardsWeeklyMaximum
+    end
 
-    return changed
+    local shardInfo = GetCurrencyInfoByID(cofferKeyShardsCurrencyID)
+    if shardInfo then
+        local weeklyMaximum = shardInfo.maxWeeklyQuantity or 0
+        if weeklyMaximum <= 0 then
+            weeklyMaximum = cofferKeyShardsWeeklyMaximum
+        end
+
+        cofferKeyShardsRemaining = math.max(weeklyMaximum - (shardInfo.quantityEarnedThisWeek or 0), 0)
+    end
+
+    local delvesData = {
+        gildedStashesLooted = math.max(0, math.min(gildedStashesLooted, 4)),
+        trovehuntersBounty = trovehuntersBounty,
+        cofferKeyShardsRemaining = cofferKeyShardsRemaining,
+    }
+
+    if AreTablesEqual(existingDelvesData, delvesData) then
+        return false
+    end
+
+    characterData.delves = delvesData
+    return true
+end
+
+function AngusUI:UpdateCharacterPreyData(characterData)
+    local existingPreyData = characterData.prey or {}
+    local nightmare = math.min(CountCompletedQuests(nightmarePreyQuestIDs), 4)
+    local weekly = IsQuestComplete(nightmareTaskQuestID) or nightmare >= 3
+    local preyData = {
+        nightmare = nightmare,
+        weekly = weekly,
+        hard = existingPreyData.hard or 0,
+        normal = existingPreyData.normal or 0,
+    }
+
+    if AreTablesEqual(existingPreyData, preyData) then
+        return false
+    end
+
+    characterData.prey = preyData
+    return true
 end
 
 function AngusUI:UpdateCharacterProfessionsData(characterData)
-    local professions = self:BuildProfessionSnapshot()
+    local professions = self:BuildProfessionSnapshot(characterData.professions)
     if AreTablesEqual(characterData.professions, professions) then
         return false
     end
@@ -752,7 +742,36 @@ function AngusUI:UpdateCharacterProfessionsData(characterData)
     return true
 end
 
-function AngusUI:UpdateChoresCharacterData()
+function AngusUI:UpdateCharacterProfessionConcentrationData(characterData)
+    local concentrationSnapshot = self:GetProfessionConcentrationSnapshot()
+    if not concentrationSnapshot then
+        return false
+    end
+
+    local updated = false
+
+    for professionName, concentrationData in pairs(concentrationSnapshot) do
+        local professionData = characterData.professions[professionName]
+        if professionData then
+            local existingConcentration = professionData.concentration
+            if
+                type(existingConcentration) ~= "table" or
+                existingConcentration.current ~= concentrationData.current or
+                existingConcentration.timestamp ~= concentrationData.timestamp
+            then
+                professionData.concentration = {
+                    current = concentrationData.current,
+                    timestamp = concentrationData.timestamp,
+                }
+                updated = true
+            end
+        end
+    end
+
+    return updated
+end
+
+function AngusUI:UpdateChoresCharacterData(includeProfessionConcentration)
     local characterData = self:GetChoresCharacterData()
     local weeklyResetKey = GetWeeklyResetKey()
     local changed = false
@@ -766,15 +785,17 @@ function AngusUI:UpdateChoresCharacterData()
         changed = true
     end
 
-    characterData.cofferKeys = characterData.cofferKeys or {}
     characterData.delves = characterData.delves or {}
-    characterData.nightmarePrey = characterData.nightmarePrey or {}
+    characterData.prey = characterData.prey or {}
     characterData.professions = characterData.professions or {}
 
-    changed = self:UpdateCharacterCofferKeyData(characterData) or changed
     changed = self:UpdateCharacterDelvesData(characterData) or changed
-    changed = self:UpdateCharacterNightmarePreyData(characterData) or changed
+    changed = self:UpdateCharacterPreyData(characterData) or changed
     changed = self:UpdateCharacterProfessionsData(characterData) or changed
+
+    if includeProfessionConcentration then
+        changed = self:UpdateCharacterProfessionConcentrationData(characterData) or changed
+    end
 
     if changed or not characterData.lastChanged then
         characterData.lastChanged = GetCurrentDateTag()
@@ -823,14 +844,14 @@ function AngusUI:ChoresHandleCurrencyUpdate(currencyID)
         return
     end
 
-    if currencyID == nil or currencyID == cofferKeyShardsCurrencyID or currencyID == restoredCofferKeyCurrencyID then
+    if currencyID == nil or currencyID == cofferKeyShardsCurrencyID then
         self:ChoresRefresh()
     end
 end
 
-function AngusUI:ChoresRefresh()
+function AngusUI:ChoresRefresh(includeProfessionConcentration)
     self:UpdateChoresAccountData()
-    self:UpdateChoresCharacterData()
+    self:UpdateChoresCharacterData(includeProfessionConcentration == true)
 
     if self.choresToast and self.choresToast:IsShown() then
         UpdateToastLayout(self.choresToast, self:BuildChoresRows())
