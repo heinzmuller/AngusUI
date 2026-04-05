@@ -17,6 +17,11 @@ frame:RegisterEvent("PLAYER_LEVEL_UP")
 frame:RegisterEvent("ACHIEVEMENT_EARNED")
 frame:RegisterEvent("NEW_MOUNT_ADDED")
 frame:RegisterEvent("NEW_PET_ADDED")
+frame:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
+frame:RegisterEvent("UNIT_AURA")
+frame:RegisterEvent("TRADE_SKILL_SHOW")
+frame:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
+frame:RegisterEvent("TRADE_SKILL_DETAILS_UPDATE")
 
 local function Set(list)
     local set = {}
@@ -33,9 +38,8 @@ local function SlashCommand(command)
         back = function() AngusUI:TeleportBack() end,
         rep = function() AngusUI:Reputations() end,
         crests = function() AngusUI:Crests() end,
-        delve = function() AngusUI:DelvesCommand() end,
-        delves = function() AngusUI:DelvesCommand() end,
         ui = function() AngusUI:UI() end,
+        toast = function() AngusUI:ShowChoresToast(true) end,
     }
 
     if commands[command] then
@@ -55,6 +59,10 @@ function frame:ADDON_LOADED(self, addon)
         if AngusUI.SettingsInit then
             AngusUI:SettingsInit()
         end
+
+        if AngusUI.ChoresInit then
+            AngusUI:ChoresInit()
+        end
     end
 
     if (addon == "Blizzard_TimeManager") then
@@ -66,12 +74,12 @@ function frame:ADDON_LOADED(self, addon)
         AngusUI:CharacterPanel()
     end
 
-    if (addon == "Blizzard_DelvesDifficultyPicker") then
-        AngusUI:Delves()
-    end
-
     if (addon == "Blizzard_PlayerSpells") then
         AngusUI:TalentRecommendations()
+    end
+
+    if (addon == "Blizzard_UnitFrame") then
+        AngusUI:PartyFrames()
     end
 end
 
@@ -87,8 +95,31 @@ frame:SetScript(
             AngusUI:ApplyTheme()
             AngusUI:FriendsFrame()
             AngusUI:CharacterPanel()
-            AngusUI:Delves()
             AngusUI:TalentRecommendations()
+            AngusUI:PartyFrames()
+            if AngusUI.ChoresRefresh then
+                AngusUI:ChoresRefresh()
+            end
+            if AngusUI.QueueChoresGildedRefresh then
+                AngusUI:QueueChoresGildedRefresh()
+            end
+            AngusUI:ShowChoresToast()
+        end
+
+        if (event == "CURRENCY_DISPLAY_UPDATE") then
+            if AngusUI.ChoresHandleCurrencyUpdate then
+                AngusUI:ChoresHandleCurrencyUpdate(...)
+            end
+        end
+
+        if
+            (event == "TRADE_SKILL_SHOW") or
+            (event == "TRADE_SKILL_DATA_SOURCE_CHANGED") or
+            (event == "TRADE_SKILL_DETAILS_UPDATE")
+        then
+            if AngusUI.ChoresRefresh then
+                AngusUI:ChoresRefresh(true)
+            end
         end
 
         if (event == "PLAYER_SPECIALIZATION_CHANGED") or (event == "PLAYER_ENTERING_WORLD") then
@@ -103,6 +134,8 @@ frame:SetScript(
 
         if
             (event == "PLAYER_ENTERING_WORLD") or
+            (event == "BAG_UPDATE_DELAYED") or
+            ((event == "UNIT_AURA") and (...) == "player") or
             (event == "PLAYER_EQUIPMENT_CHANGED") or
             (event == "GET_ITEM_INFO_RECEIVED") or
             (event == "QUEST_LOG_UPDATE") or
@@ -112,7 +145,9 @@ frame:SetScript(
             (event == "QUEST_WATCH_LIST_CHANGED")
         then
             AngusUI:QueueWorldQuestIconsRefresh()
-            AngusUI:Delves()
+            if AngusUI.ChoresRefresh then
+                AngusUI:ChoresRefresh()
+            end
         end
 
         if (event == "MYTHIC_PLUS_CURRENT_AFFIX_UPDATE") then

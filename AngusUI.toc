@@ -10,11 +10,12 @@ ActionRangeOverlay.lua
 Screenshots.lua
 ItemOverlays.lua
 CharacterPanel.lua
+Chores.lua
 Crests.lua
 FriendsFrame.lua
 MythicPlus.lua
-Delves.lua
 Reputations.lua
+PartyFrames.lua
 Settings.lua
 TalentRecommendations.lua
 Theme.lua
