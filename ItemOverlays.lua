@@ -62,6 +62,10 @@ local function GetSlotButton(frameName)
     return _G[frameName]
 end
 
+local function GetButtonIcon(button)
+    return button and (button.icon or button.Icon or (button.GetName and _G[button:GetName() .. "Icon"]))
+end
+
 local function GetOverlay(button, fontSize, yOffset)
     local text = button.AngusUIItemLevelText
 
@@ -394,6 +398,11 @@ local function GetContainerItemLevel(containerID, slotID, button)
     return itemLevel, containerItemInfo and containerItemInfo.quality or nil
 end
 
+local function GetContainerItemQuality(containerID, slotID)
+    local containerItemInfo = C_Container and C_Container.GetContainerItemInfo and C_Container.GetContainerItemInfo(containerID, slotID)
+    return containerItemInfo and containerItemInfo.quality or nil
+end
+
 local function GetBagItemLevel(itemButton)
     local bag = itemButton:GetBagID()
     local slot = itemButton:GetID()
@@ -522,6 +531,22 @@ local function UpdateOverlay(button, itemLevel, fontSize, yOffset, quality)
     end
 end
 
+local function UpdateDesaturation(button, quality)
+    local icon = GetButtonIcon(button)
+    if not icon or not icon.SetDesaturated then
+        return
+    end
+
+    local shouldDesaturate = quality == ITEM_QUALITY_POOR
+    if shouldDesaturate then
+        icon:SetDesaturated(true)
+        button.AngusUIDesaturatedPoor = true
+    elseif button.AngusUIDesaturatedPoor then
+        icon:SetDesaturated(false)
+        button.AngusUIDesaturatedPoor = nil
+    end
+end
+
 local function UpdateBindOverlay(button, containerID, slotID)
     local text = GetBindOverlay(button)
     local background = GetOverlayBackground(button, "AngusUIBindBackground")
@@ -590,6 +615,7 @@ local function HookFrames(self)
         hooksecurefunc(BankPanelItemButtonMixin, "Refresh", function(itemButton)
             local itemLevel, quality = GetBankItemLevel(itemButton)
             UpdateOverlay(itemButton, itemLevel, 10, 1, quality)
+            UpdateDesaturation(itemButton, GetContainerItemQuality(itemButton:GetBankTabID(), itemButton:GetContainerSlotID()))
             UpdateBankBindOverlay(itemButton)
         end)
 
@@ -626,6 +652,7 @@ local function RefreshBagFrameItemLevels(frame)
     for _, itemButton in frame:EnumerateValidItems() do
         local itemLevel, quality = GetBagItemLevel(itemButton)
         UpdateOverlay(itemButton, itemLevel, 10, 1, quality)
+        UpdateDesaturation(itemButton, GetContainerItemQuality(itemButton:GetBagID(), itemButton:GetID()))
         UpdateBagBindOverlay(itemButton)
     end
 end
@@ -665,6 +692,7 @@ local function RefreshBankItemOverlays()
     for itemButton in BankPanel:EnumerateValidItems() do
         local itemLevel, quality = GetBankItemLevel(itemButton)
         UpdateOverlay(itemButton, itemLevel, 10, 1, quality)
+        UpdateDesaturation(itemButton, GetContainerItemQuality(itemButton:GetBankTabID(), itemButton:GetContainerSlotID()))
         UpdateBankBindOverlay(itemButton)
     end
 end
