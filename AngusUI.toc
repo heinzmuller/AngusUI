@@ -4,6 +4,7 @@
 ## Version: 12.0.0
 ## Notes: Angus UI.
 ## SavedVariables: AngusUIDB
+## SavedVariablesPerCharacter: AngusUICharacterSyncDB
 
 AngusUI.lua
 ActionRangeOverlay.lua

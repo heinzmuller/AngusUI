@@ -394,24 +394,15 @@ end
 function AngusUI:GetSyncDB()
     AngusUIDB = AngusUIDB or {}
     AngusUIDB.sync = AngusUIDB.sync or {}
-    AngusUIDB.sync.characters = AngusUIDB.sync.characters or {}
     AngusUIDB.sync.account = AngusUIDB.sync.account or {}
 
     return AngusUIDB.sync
 end
 
 function AngusUI:GetSyncCharacterData()
-    local syncDB = self:GetSyncDB()
-    local characterKey = GetCharacterStorageKey()
-    if not characterKey then
-        return nil
-    end
+    AngusUICharacterSyncDB = AngusUICharacterSyncDB or {}
 
-    local characterData = syncDB.characters[characterKey]
-    if not characterData then
-        characterData = {}
-        syncDB.characters[characterKey] = characterData
-    end
+    local characterData = AngusUICharacterSyncDB
 
     characterData.delves = characterData.delves or {}
     characterData.prey = characterData.prey or {}

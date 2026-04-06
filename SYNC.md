@@ -1,6 +1,7 @@
 # Sync Data Spec
 
-This document is the working contract for `AngusUIDB.sync`.
+This document is the working contract for `AngusUIDB.sync.account` and
+`AngusUICharacterSyncDB`.
 
 It serves two purposes:
 
@@ -29,10 +30,15 @@ The goals for this structure are:
 
 ## Contract Rules
 
-- The canonical root is `AngusUIDB.sync`.
-- Character records live under `AngusUIDB.sync.characters["Name-Realm"]`.
+- The canonical account root is `AngusUIDB.sync.account`.
+- The canonical character root is `AngusUICharacterSyncDB`.
+- Account data stays in the shared saved-variable file; do not duplicate it into
+  the per-character file.
 - Character data should stay flat at the character root; do not introduce extra
-  wrapper keys like `sync`, `export`, `payload`, or `data` inside a character.
+  wrapper keys like `sync`, `character`, `export`, `payload`, or `data` inside
+  `AngusUICharacterSyncDB`.
+- Legacy `AngusUIDB.sync.characters` data is obsolete and not part of the
+  contract.
 - Values should prefer primitives, compact arrays, and ID-keyed tables.
 - Names used as keys should only be used when they are naturally stable and
   human-meaningful, such as profession names.
@@ -52,19 +58,24 @@ The goals for this structure are:
 - Treat `currencies` as `currencyID -> quantity`.
 - Treat `gold` as the character's current carried gold value, stored in copper.
 - Divide `gold` by `10000` to display a gold-denominated value.
-- Treat `account.currencies` as tracked warband-transferable currency totals across
-  the account.
-- Treat `account.weeklyQuests` as the current account-level set of tracked weekly
-  quest IDs that are active this reset, keyed by quest ID with quest names as values.
-- Treat `account.warbandBank.items` as `itemID -> totalCount` aggregated across all
-  purchased warband bank tabs.
-- Treat `account.warbandBank.tabs` as the canonical layout snapshot for repainting
-  the warband bank in external consumers.
+- Treat `account.currencies` as tracked warband-transferable currency totals
+  across the account.
+- Treat `account.weeklyQuests` as the current account-level set of tracked
+  weekly quest IDs that are active this reset, keyed by quest ID with quest
+  names as values.
+- Treat `account.warbandBank.items` as `itemID -> totalCount` aggregated across
+  all purchased warband bank tabs.
+- Treat `account.warbandBank.tabs` as the canonical layout snapshot for
+  repainting the warband bank in external consumers.
 - Treat `weeklies` as the list of tracked active weekly quest IDs completed by that
   character this reset.
 - Treat `professions` as a sparse map of learned professions only.
-- Treat `account` data as account-wide state shared across all characters in the
-  same saved-variable file.
+- Treat `AngusUICharacterSyncDB` as a single-character payload with no
+  `characters[...]` wrapper.
+- Treat account and character sync data as separate payloads coming from
+  separate saved-variable files.
+- Treat `AngusUIDB.sync.account` as account-wide state shared across all
+  characters in the same shared saved-variable file.
 
 ## Shape
 
@@ -112,55 +123,54 @@ AngusUIDB = {
                 },
             },
         },
-        characters = {
-            ["Name-Realm"] = {
-                weeklyResetKey = 123456,
-                lastChanged = "2026-04-05",
-                lastChangedResetKey = 123456,
-                delves = {
-                    gildedStashesLooted = 0,
-                    trovehuntersBounty = false,
-                    cofferKeyShardsRemaining = 600,
-                },
-                prey = {
-                    nightmare = 0,
-                    weekly = false,
-                    hard = 0,
-                    normal = 0,
-                },
-                professions = {
-                    ProfessionName = {
-                        treatise = false,
-                        weekly = false,
-                        treasuresRemaining = 2,
-                        concentration = {
-                            current = 500,
-                            timestamp = 1775412345,
-                        },
-                    },
-                },
-                greatVault = {
-                    raid = {},
-                    dungeons = {},
-                    delves = {},
-                },
-                currencies = {
-                    [3383] = 0,
-                    [3341] = 0,
-                    [3343] = 0,
-                    [3345] = 0,
-                    [3347] = 0,
-                    [3378] = 0,
-                    [3212] = 0,
-                    [3310] = 0,
-                    [3028] = 0,
-                },
-                gold = 0,
-                weeklies = {
-                    57637,
-                },
+    },
+}
+
+AngusUICharacterSyncDB = {
+    weeklyResetKey = 123456,
+    lastChanged = "2026-04-05",
+    lastChangedResetKey = 123456,
+    delves = {
+        gildedStashesLooted = 0,
+        trovehuntersBounty = false,
+        cofferKeyShardsRemaining = 600,
+    },
+    prey = {
+        nightmare = 0,
+        weekly = false,
+        hard = 0,
+        normal = 0,
+    },
+    professions = {
+        ProfessionName = {
+            treatise = false,
+            weekly = false,
+            treasuresRemaining = 2,
+            concentration = {
+                current = 500,
+                timestamp = 1775412345,
             },
         },
+    },
+    greatVault = {
+        raid = {},
+        dungeons = {},
+        delves = {},
+    },
+    currencies = {
+        [3383] = 0,
+        [3341] = 0,
+        [3343] = 0,
+        [3345] = 0,
+        [3347] = 0,
+        [3378] = 0,
+        [3212] = 0,
+        [3310] = 0,
+        [3028] = 0,
+    },
+    gold = 0,
+    weeklies = {
+        57637,
     },
 }
 ```
@@ -193,15 +203,15 @@ Currently tracked rotating weekly quests are the active Timewalking raid quests:
 ```
 
 `account.weeklyQuests` only contains tracked quests that are actually active for
-the current weekly reset. `characters[...].weeklies` only contains quest IDs from
-that active set which the character has completed.
+the current weekly reset. `AngusUICharacterSyncDB.weeklies` only contains quest
+IDs from that active set which the character has completed.
 
 ## Fresh Weekly Character
 
 Example for a newly reset character with no tracked weekly progress yet.
 
 ```lua
-["Freshalt-Frostwhisper"] = {
+AngusUICharacterSyncDB = {
     weeklyResetKey = 123456,
     lastChanged = "2026-04-05",
     lastChangedResetKey = 123456,
@@ -262,7 +272,7 @@ Example for a newly reset character with no tracked weekly progress yet.
 Example for a character with partial weekly progress.
 
 ```lua
-["Mainchar-Frostwhisper"] = {
+AngusUICharacterSyncDB = {
     weeklyResetKey = 123456,
     lastChanged = "2026-04-05",
     lastChangedResetKey = 123456,
@@ -314,6 +324,9 @@ Example for a character with partial weekly progress.
         [3028] = 2,
     },
     gold = 9876543,
+    weeklies = {
+        57637,
+    },
 }
 ```
 
@@ -322,7 +335,7 @@ Example for a character with partial weekly progress.
 Example for a character with the tracked weeklies fully done.
 
 ```lua
-["Sweatlord-TarrenMill"] = {
+AngusUICharacterSyncDB = {
     weeklyResetKey = 123456,
     lastChanged = "2026-04-05",
     lastChangedResetKey = 123456,
@@ -374,6 +387,9 @@ Example for a character with the tracked weeklies fully done.
         [3028] = 4,
     },
     gold = 5432100,
+    weeklies = {
+        57637,
+    },
 }
 ```
 
@@ -392,8 +408,10 @@ Example for a character with the tracked weeklies fully done.
   slot contents so external apps can reconstruct the original tab/slot layout.
 - `account.warbandBank.tabs[index].slots[slotID]` is only present when that slot
   contains an item; empty slots are omitted.
-- `characters[...].weeklies` is a sorted array of completed tracked weekly quest
-  IDs for the currently active `account.weeklyQuests` set.
+- `AngusUICharacterSyncDB` is the complete sync payload for one character,
+  stored in the per-character saved-variable file.
+- `AngusUICharacterSyncDB.weeklies` is a sorted array of completed tracked
+  weekly quest IDs for the currently active `account.weeklyQuests` set.
 - Warband bank item snapshots update when the addon can read account-bank
   contents; if the bank is not currently accessible, the last known item snapshot
   is preserved while gold may still update.
