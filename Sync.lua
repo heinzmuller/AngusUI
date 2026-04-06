@@ -19,6 +19,18 @@ local trackedCurrencyIDs = {
     cofferKeyShardsCurrencyID,
     restoredCofferKeyCurrencyID,
 }
+local trackedCurrencyIDSet = {}
+local warbandBankTabSize = 98
+local timewalkingRaidWeeklyQuestByLfgID = {
+    [744] = 47523,
+    [995] = 50316,
+    [1146] = 57637,
+}
+
+for _, currencyID in ipairs(trackedCurrencyIDs) do
+    trackedCurrencyIDSet[currencyID] = true
+end
+
 local weeklyRewardTrackTypes = {
     raid = Enum.WeeklyRewardChestThresholdType and Enum.WeeklyRewardChestThresholdType.Raid,
     dungeons = Enum.WeeklyRewardChestThresholdType and Enum.WeeklyRewardChestThresholdType.Activities,
@@ -131,12 +143,117 @@ local function GetCurrentDateTag()
     return date("%Y-%m-%d")
 end
 
+local function GetCharacterGold()
+    if not GetMoney then
+        return 0
+    end
+
+    return GetMoney() or 0
+end
+
 local function GetCurrencyInfoByID(currencyID)
     if not C_CurrencyInfo or not C_CurrencyInfo.GetCurrencyInfo then
         return nil
     end
 
     return C_CurrencyInfo.GetCurrencyInfo(currencyID)
+end
+
+local function IsAccountTransferableCurrency(currencyID)
+    if not currencyID then
+        return false
+    end
+
+    if C_CurrencyInfo and C_CurrencyInfo.IsAccountTransferableCurrency then
+        return C_CurrencyInfo.IsAccountTransferableCurrency(currencyID) == true
+    end
+
+    local currencyInfo = GetCurrencyInfoByID(currencyID)
+    return currencyInfo and currencyInfo.isAccountTransferable == true
+end
+
+local function GetContainerItemIDAndCount(containerID, slotID)
+    if not C_Container or not C_Container.GetContainerItemInfo then
+        return nil, 0
+    end
+
+    local itemInfo = C_Container.GetContainerItemInfo(containerID, slotID)
+    if not itemInfo then
+        return nil, 0
+    end
+
+    local itemID = itemInfo.itemID
+    if not itemID and C_Container.GetContainerItemID then
+        itemID = C_Container.GetContainerItemID(containerID, slotID)
+    end
+
+    if not itemID then
+        local itemLink = itemInfo.hyperlink
+        if not itemLink and C_Container.GetContainerItemLink then
+            itemLink = C_Container.GetContainerItemLink(containerID, slotID)
+        end
+
+        if type(itemLink) == "string" then
+            itemID = tonumber(itemLink:match("item:(%d+)"))
+        end
+    end
+
+    return itemID, itemInfo.stackCount or itemInfo.quantity or 0
+end
+
+local function CanScanWarbandBank()
+    if not C_Bank or not Enum or not Enum.BankType or not Enum.BankType.Account then
+        return false
+    end
+
+    if C_Bank.CanUseBank then
+        return C_Bank.CanUseBank(Enum.BankType.Account) == true
+    end
+
+    return false
+end
+
+local function GetQuestName(questID)
+    if not questID or not C_QuestLog or not C_QuestLog.GetTitleForQuestID then
+        return nil
+    end
+
+    return C_QuestLog.GetTitleForQuestID(questID)
+end
+
+local function GetActiveWeeklyQuestMap()
+    if not GetNumRandomDungeons or not GetLFGRandomDungeonInfo then
+        return {}
+    end
+
+    local weeklyQuests = {}
+
+    for index = 1, GetNumRandomDungeons() do
+        local lfgID = GetLFGRandomDungeonInfo(index)
+        local questID = timewalkingRaidWeeklyQuestByLfgID[lfgID]
+        if questID then
+            local questName = GetQuestName(questID)
+            if questName and questName ~= "" then
+                weeklyQuests[questID] = questName
+            end
+        end
+    end
+
+    return weeklyQuests
+end
+
+local function BuildCompletedWeeklyQuestList(activeWeeklyQuests)
+    local completedWeeklyQuestIDs = {}
+
+    for questID, _ in pairs(activeWeeklyQuests or {}) do
+        if IsQuestComplete(questID) then
+            table.insert(completedWeeklyQuestIDs, questID)
+        end
+    end
+
+    table.sort(completedWeeklyQuestIDs)
+
+    return completedWeeklyQuestIDs
 end
 
 local function GetGreatVaultItemLevel(activity)
@@ -301,6 +418,8 @@ function AngusUI:GetSyncCharacterData()
     characterData.professions = characterData.professions or {}
     characterData.greatVault = characterData.greatVault or {}
     characterData.currencies = characterData.currencies or {}
+    characterData.gold = characterData.gold or 0
+    characterData.weeklies = characterData.weeklies or {}
 
     return characterData
 end
@@ -308,8 +427,35 @@ end
 function AngusUI:GetSyncAccountData()
     local syncDB = self:GetSyncDB()
     syncDB.account.firstWorldBoss = syncDB.account.firstWorldBoss == true
+    syncDB.account.currencies = syncDB.account.currencies or {}
+    syncDB.account.weeklyQuests = syncDB.account.weeklyQuests or {}
+    syncDB.account.warbandBank = syncDB.account.warbandBank or {}
+    syncDB.account.warbandBank.gold = syncDB.account.warbandBank.gold or 0
+    syncDB.account.warbandBank.slotCount = syncDB.account.warbandBank.slotCount or warbandBankTabSize
+    syncDB.account.warbandBank.items = syncDB.account.warbandBank.items or {}
+    syncDB.account.warbandBank.tabs = syncDB.account.warbandBank.tabs or {}
 
     return syncDB.account
+end
+
+function AngusUI:UpdateSyncCharacterWeekliesData(characterData, accountData)
+    local completedWeeklies = BuildCompletedWeeklyQuestList(accountData and accountData.weeklyQuests or nil)
+    if AreTablesEqual(characterData.weeklies, completedWeeklies) then
+        return false
+    end
+
+    characterData.weeklies = completedWeeklies
+    return true
+end
+
+function AngusUI:UpdateSyncAccountWeeklyQuestsData(accountData)
+    local weeklyQuests = GetActiveWeeklyQuestMap()
+    if AreTablesEqual(accountData.weeklyQuests, weeklyQuests) then
+        return false
+    end
+
+    accountData.weeklyQuests = weeklyQuests
+    return true
 end
 
 function AngusUI:BuildProfessionSyncSnapshot(existingProfessions)
@@ -317,8 +463,8 @@ function AngusUI:BuildProfessionSyncSnapshot(existingProfessions)
 
     for _, profession in ipairs(self:GetCurrentProfessionSyncData()) do
         if IsProfessionLearned(profession.spellID) then
-            local treatiseComplete = profession.treatise and IsAnyQuestComplete(profession.treatise) or true
-            local weeklyComplete = profession.weekly and IsAnyQuestComplete(profession.weekly) or true
+            local treatiseComplete = profession.treatise == nil or IsAnyQuestComplete(profession.treatise)
+            local weeklyComplete = profession.weekly == nil or IsAnyQuestComplete(profession.weekly)
             local treasureCompleted, treasureTotal = CountCompletedSources(profession.treasures)
             local previousProfessionData = existingProfessions and existingProfessions[profession.name]
 
@@ -479,6 +625,16 @@ function AngusUI:UpdateSyncCharacterCurrenciesData(characterData)
     return true
 end
 
+function AngusUI:UpdateSyncCharacterGoldData(characterData)
+    local gold = GetCharacterGold()
+    if characterData.gold == gold then
+        return false
+    end
+
+    characterData.gold = gold
+    return true
+end
+
 function AngusUI:UpdateSyncCharacterProfessionConcentrationData(characterData)
     local concentrationSnapshot = self:GetProfessionConcentrationSnapshot()
     if not concentrationSnapshot then
@@ -508,8 +664,135 @@ function AngusUI:UpdateSyncCharacterProfessionConcentrationData(characterData)
     return updated
 end
 
+function AngusUI:RequestSyncAccountCurrencyData()
+    if not C_CurrencyInfo or not C_CurrencyInfo.RequestCurrencyDataForAccountCharacters then
+        return false
+    end
+
+    if C_CurrencyInfo.IsAccountCharacterCurrencyDataReady and C_CurrencyInfo.IsAccountCharacterCurrencyDataReady() then
+        self.syncAccountCurrencyRequestPending = false
+        return true
+    end
+
+    if not self.syncAccountCurrencyRequestPending then
+        self.syncAccountCurrencyRequestPending = true
+        C_CurrencyInfo.RequestCurrencyDataForAccountCharacters()
+    end
+
+    return false
+end
+
+function AngusUI:BuildSyncAccountCurrenciesSnapshot()
+    if not C_CurrencyInfo or not C_CurrencyInfo.FetchCurrencyDataFromAccountCharacters then
+        return nil
+    end
+
+    if not self:RequestSyncAccountCurrencyData() then
+        return nil
+    end
+
+    local currenciesData = {}
+    local playerGUID = UnitGUID("player")
+
+    for _, currencyID in ipairs(trackedCurrencyIDs) do
+        if IsAccountTransferableCurrency(currencyID) then
+            local totalQuantity = 0
+            local currentCharacterSeen = false
+            local characterDatas = C_CurrencyInfo.FetchCurrencyDataFromAccountCharacters(currencyID) or {}
+
+            for _, characterData in ipairs(characterDatas) do
+                totalQuantity = totalQuantity + (characterData.quantity or 0)
+                if playerGUID and characterData.characterGUID == playerGUID then
+                    currentCharacterSeen = true
+                end
+            end
+
+            if not currentCharacterSeen then
+                local currencyInfo = GetCurrencyInfoByID(currencyID)
+                totalQuantity = totalQuantity + ((currencyInfo and currencyInfo.quantity) or 0)
+            end
+
+            currenciesData[currencyID] = totalQuantity
+        end
+    end
+
+    return currenciesData
+end
+
+function AngusUI:UpdateSyncAccountCurrenciesData(accountData)
+    local currenciesData = self:BuildSyncAccountCurrenciesSnapshot()
+    if not currenciesData or AreTablesEqual(accountData.currencies, currenciesData) then
+        return false
+    end
+
+    accountData.currencies = currenciesData
+    return true
+end
+
+function AngusUI:BuildWarbandBankSnapshot(existingWarbandBank)
+    local warbandBankData = {
+        gold = existingWarbandBank and existingWarbandBank.gold or 0,
+        slotCount = warbandBankTabSize,
+        items = existingWarbandBank and existingWarbandBank.items or {},
+        tabs = existingWarbandBank and existingWarbandBank.tabs or {},
+    }
+
+    if C_Bank and C_Bank.FetchDepositedMoney and Enum and Enum.BankType and Enum.BankType.Account then
+        local depositedMoney = C_Bank.FetchDepositedMoney(Enum.BankType.Account)
+        if depositedMoney ~= nil then
+            warbandBankData.gold = depositedMoney
+        end
+    end
+
+    if not CanScanWarbandBank() or not C_Bank or not C_Bank.FetchPurchasedBankTabIDs then
+        return warbandBankData, false
+    end
+
+    local items = {}
+    local tabs = {}
+    local tabIDs = C_Bank.FetchPurchasedBankTabIDs(Enum.BankType.Account) or {}
+    local tabSettings = C_Bank.FetchPurchasedBankTabData and C_Bank.FetchPurchasedBankTabData(Enum.BankType.Account) or {}
+
+    for index, tabID in ipairs(tabIDs) do
+        local slots = {}
+
+        for slotID = 1, warbandBankTabSize do
+            local itemID, itemCount = GetContainerItemIDAndCount(tabID, slotID)
+            if itemID and itemCount and itemCount > 0 then
+                slots[slotID] = {
+                    itemID = itemID,
+                    count = itemCount,
+                }
+                items[itemID] = (items[itemID] or 0) + itemCount
+            end
+        end
+
+        tabs[index] = {
+            id = tabID,
+            name = tabSettings[index] and tabSettings[index].name or "",
+            icon = tabSettings[index] and tabSettings[index].icon or nil,
+            slots = slots,
+        }
+    end
+
+    warbandBankData.items = items
+    warbandBankData.tabs = tabs
+    return warbandBankData, true
+end
+
+function AngusUI:UpdateSyncAccountWarbandBankData(accountData)
+    local warbandBankData = self:BuildWarbandBankSnapshot(accountData.warbandBank)
+    if AreTablesEqual(accountData.warbandBank, warbandBankData) then
+        return false
+    end
+
+    accountData.warbandBank = warbandBankData
+    return true
+end
+
 function AngusUI:UpdateSyncCharacterData(includeProfessionConcentration)
     local characterData = self:GetSyncCharacterData()
+    local accountData = self:GetSyncAccountData()
     local weeklyResetKey = GetWeeklyResetKey()
     local changed = false
     if not characterData then
@@ -527,12 +810,16 @@ function AngusUI:UpdateSyncCharacterData(includeProfessionConcentration)
     characterData.professions = characterData.professions or {}
     characterData.greatVault = characterData.greatVault or {}
     characterData.currencies = characterData.currencies or {}
+    characterData.gold = characterData.gold or 0
+    characterData.weeklies = characterData.weeklies or {}
 
     changed = self:UpdateSyncCharacterDelvesData(characterData) or changed
     changed = self:UpdateSyncCharacterPreyData(characterData) or changed
     changed = self:UpdateSyncCharacterProfessionsData(characterData) or changed
     changed = self:UpdateSyncCharacterGreatVaultData(characterData) or changed
     changed = self:UpdateSyncCharacterCurrenciesData(characterData) or changed
+    changed = self:UpdateSyncCharacterGoldData(characterData) or changed
+    changed = self:UpdateSyncCharacterWeekliesData(characterData, accountData) or changed
 
     if includeProfessionConcentration then
         changed = self:UpdateSyncCharacterProfessionConcentrationData(characterData) or changed
@@ -556,6 +843,7 @@ function AngusUI:UpdateSyncAccountData()
     if weeklyResetKey and accountData.weeklyResetKey ~= weeklyResetKey then
         accountData.weeklyResetKey = weeklyResetKey
         accountData.firstWorldBoss = false
+        accountData.weeklyQuests = {}
     end
 
     if IsAnyQuestComplete(firstWorldBossQuestIDs) then
@@ -563,6 +851,10 @@ function AngusUI:UpdateSyncAccountData()
     elseif accountData.firstWorldBoss == nil then
         accountData.firstWorldBoss = false
     end
+
+    self:UpdateSyncAccountCurrenciesData(accountData)
+    self:UpdateSyncAccountWeeklyQuestsData(accountData)
+    self:UpdateSyncAccountWarbandBankData(accountData)
 
     return accountData
 end
@@ -585,9 +877,14 @@ function AngusUI:SyncHandleCurrencyUpdate(currencyID)
         return
     end
 
-    if currencyID == nil or currencyID == cofferKeyShardsCurrencyID then
+    if currencyID == nil or currencyID == cofferKeyShardsCurrencyID or trackedCurrencyIDSet[currencyID] then
         self:SyncRefresh()
     end
+end
+
+function AngusUI:SyncHandleAccountCurrencyDataUpdate()
+    self.syncAccountCurrencyRequestPending = false
+    self:SyncRefresh()
 end
 
 function AngusUI:SyncRefresh(includeProfessionConcentration)
@@ -605,6 +902,7 @@ function AngusUI:SyncInit()
     end
 
     self.syncInitialized = true
+    self.syncAccountCurrencyRequestPending = false
     self.syncGildedRefreshQueued = false
     self:GetSyncDB()
 end

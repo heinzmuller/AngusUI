@@ -18,12 +18,18 @@ frame:RegisterEvent("ACHIEVEMENT_EARNED")
 frame:RegisterEvent("NEW_MOUNT_ADDED")
 frame:RegisterEvent("NEW_PET_ADDED")
 frame:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
+frame:RegisterEvent("ACCOUNT_CHARACTER_CURRENCY_DATA_RECEIVED")
+frame:RegisterEvent("CURRENCY_TRANSFER_LOG_UPDATE")
+frame:RegisterEvent("ACCOUNT_MONEY")
+frame:RegisterEvent("PLAYER_MONEY")
+frame:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW")
 frame:RegisterEvent("UNIT_AURA")
 frame:RegisterEvent("TRADE_SKILL_SHOW")
 frame:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
 frame:RegisterEvent("TRADE_SKILL_DETAILS_UPDATE")
 frame:RegisterEvent("WEEKLY_REWARDS_UPDATE")
 frame:RegisterEvent("WEEKLY_REWARDS_ITEM_CHANGED")
+frame:RegisterEvent("LFG_UPDATE_RANDOM_INFO")
 
 local function Set(list)
     local set = {}
@@ -130,7 +136,37 @@ frame:SetScript(
             end
         end
 
+        if (event == "ACCOUNT_CHARACTER_CURRENCY_DATA_RECEIVED") or (event == "CURRENCY_TRANSFER_LOG_UPDATE") then
+            if AngusUI.SyncHandleAccountCurrencyDataUpdate then
+                AngusUI:SyncHandleAccountCurrencyDataUpdate()
+            end
+        end
+
+        if (event == "ACCOUNT_MONEY") or (event == "PLAYER_MONEY") then
+            if AngusUI.SyncRefresh then
+                AngusUI:SyncRefresh()
+            end
+        end
+
+        if (event == "PLAYER_INTERACTION_MANAGER_FRAME_SHOW") then
+            local interactionType = ...
+            if
+                interactionType == Enum.PlayerInteractionType.Banker or
+                interactionType == Enum.PlayerInteractionType.AccountBanker
+            then
+                if AngusUI.SyncRefresh then
+                    AngusUI:SyncRefresh()
+                end
+            end
+        end
+
         if (event == "WEEKLY_REWARDS_UPDATE") or (event == "WEEKLY_REWARDS_ITEM_CHANGED") then
+            if AngusUI.SyncRefresh then
+                AngusUI:SyncRefresh()
+            end
+        end
+
+        if (event == "LFG_UPDATE_RANDOM_INFO") then
             if AngusUI.SyncRefresh then
                 AngusUI:SyncRefresh()
             end
