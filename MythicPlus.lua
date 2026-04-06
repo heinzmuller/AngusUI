@@ -24,31 +24,31 @@ function AngusUI:MythicPlus()
     text:SetPoint("TOPRIGHT", frame, "TOPRIGHT")
 
     local endOfDungeon = {
-        champion(639),
-        champion(639),
-        champion(642),
-        champion(645),
-        hero(649),
-        hero(649),
-        hero(652),
-        hero(652),
-        hero(655),
-        hero(655),
-        hero(655),
+        champion(250),
+        champion(250),
+        champion(253),
+        champion(256),
+        hero(259),
+        hero(259),
+        hero(263),
+        hero(263),
+        hero(266),
+        hero(266),
+        hero(266),
     }
 
     local vault = {
-        hero(649),
-        hero(649),
-        hero(652),
-        hero(652),
-        hero(655),
-        hero(658),
-        hero(658),
-        hero(658),
-        mythic(662),
-        mythic(662),
-        mythic(662),
+        hero(259),
+        hero(259),
+        hero(263),
+        hero(263),
+        hero(266),
+        hero(269),
+        hero(269),
+        hero(269),
+        mythic(272),
+        mythic(272),
+        mythic(272),
     }
 
     local crests = {
