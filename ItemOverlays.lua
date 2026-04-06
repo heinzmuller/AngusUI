@@ -141,11 +141,49 @@ local function GetBindOverlay(button)
 end
 
 local function GetSpecialHighlight(button)
-    return button and button.AngusUISpecialHighlight
-end
+    if not button then
+        return nil
+    end
 
-local function FindSpecialHighlight(button)
-    return button and (button.AngusUISpecialHighlight or button.SpellHighlight or button.spellHighlight or button.overlay)
+    local highlight = button.AngusUISpecialHighlight
+    if highlight then
+        return highlight
+    end
+
+    local parentName = button:GetName()
+    local frameName = parentName and (parentName .. "AngusUISpellAlert") or nil
+    local template = "ActionButtonSpellAlertTemplate"
+    if not CreateFrame then
+        return nil
+    end
+
+    local ok = false
+    ok, highlight = pcall(CreateFrame, "Frame", frameName, button, template)
+    if not ok then
+        highlight = nil
+    end
+
+    if not highlight then
+        template = "ActionBarButtonSpellActivationAlert"
+        ok, highlight = pcall(CreateFrame, "Frame", frameName, button, template)
+        if not ok then
+            highlight = nil
+        end
+    end
+
+    if not highlight then
+        return nil
+    end
+
+    highlight:SetFrameStrata(button:GetFrameStrata())
+    highlight:SetFrameLevel(math.max(button:GetFrameLevel() - 1, 0))
+    highlight:ClearAllPoints()
+    highlight:SetPoint("TOPLEFT", button, "TOPLEFT", -10, 10)
+    highlight:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 10, -10)
+    highlight:Hide()
+    button.AngusUISpecialHighlight = highlight
+
+    return highlight
 end
 
 local function SetSpecialHighlight(button, shown)
@@ -154,29 +192,66 @@ local function SetSpecialHighlight(button, shown)
     end
 
     local highlight = GetSpecialHighlight(button)
-
-    if shown then
-        if highlight and highlight:IsShown() then
-            return
-        end
-
-        if ActionButton_ShowOverlayGlow then
-            ActionButton_ShowOverlayGlow(button)
-            button.AngusUISpecialHighlight = FindSpecialHighlight(button)
-        end
-
-        return
-    end
-
     if not highlight then
         return
     end
 
-    if ActionButton_HideOverlayGlow then
-        ActionButton_HideOverlayGlow(button)
-    else
-        highlight:Hide()
+    highlight:SetParent(button)
+    highlight:SetFrameStrata(button:GetFrameStrata())
+    highlight:SetFrameLevel(math.max(button:GetFrameLevel() - 1, 0))
+    highlight:ClearAllPoints()
+    highlight:SetPoint("TOPLEFT", button, "TOPLEFT", -10, 10)
+    highlight:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 10, -10)
+    highlight:SetAlpha(0.8)
+
+    if highlight.outerGlow then
+        highlight.outerGlow:SetAlpha(0.8)
+        highlight.outerGlow:SetVertexColor(1, 0.25, 0.25)
     end
+    if highlight.innerGlow then
+        highlight.innerGlow:SetAlpha(0.8)
+        highlight.innerGlow:SetVertexColor(1, 0.25, 0.25)
+    end
+    if highlight.spark then
+        highlight.spark:SetAlpha(0.8)
+        highlight.spark:SetVertexColor(1, 0.35, 0.35)
+    end
+    if highlight.ants then
+        highlight.ants:SetAlpha(0.8)
+        highlight.ants:SetVertexColor(1, 0.25, 0.25)
+    end
+    if highlight.ProcLoopFlipbook then
+        highlight.ProcLoopFlipbook:SetAlpha(0.8)
+        highlight.ProcLoopFlipbook:SetVertexColor(1, 0.25, 0.25)
+    end
+    if highlight.ProcStartFlipbook then
+        highlight.ProcStartFlipbook:SetAlpha(0.8)
+        highlight.ProcStartFlipbook:SetVertexColor(1, 0.25, 0.25)
+    end
+
+    if shown then
+        if highlight:IsShown() then
+            return
+        end
+
+        if highlight.ProcStartAnim and highlight.ProcStartAnim.Play then
+            highlight.ProcStartAnim:Play()
+        end
+        if highlight.ProcLoop and highlight.ProcLoop.Play then
+            highlight.ProcLoop:Play()
+        end
+        highlight:Show()
+
+        return
+    end
+
+    if highlight.ProcStartAnim and highlight.ProcStartAnim.Stop then
+        highlight.ProcStartAnim:Stop()
+    end
+    if highlight.ProcLoop and highlight.ProcLoop.Stop then
+        highlight.ProcLoop:Stop()
+    end
+    highlight:Hide()
 end
 
 local function ShouldShowBindOverlayForQuality(quality)
@@ -336,19 +411,20 @@ end
 local function GetContainerBindLabel(containerID, slotID, button)
     local itemLocation = ItemLocation:CreateFromBagAndSlot(containerID, slotID)
     local containerItemInfo = C_Container and C_Container.GetContainerItemInfo and C_Container.GetContainerItemInfo(containerID, slotID)
-
-    if containerItemInfo and containerItemInfo.isBound then
-        button.AngusUIItemLevelPending = nil
-        return nil
-    end
+    local isSoulbound = itemLocation and itemLocation:IsValid() and C_Item and C_Item.IsBound and C_Item.IsBound(itemLocation)
 
     if containerItemInfo and not ShouldShowBindOverlayForQuality(containerItemInfo.quality) then
         button.AngusUIItemLevelPending = nil
         return nil
     end
 
-    if itemLocation and itemLocation:IsValid() and C_Item and C_Item.IsBoundToAccountUntilEquip and C_Item.IsBoundToAccountUntilEquip(itemLocation) then
+    if not isSoulbound and itemLocation and itemLocation:IsValid() and C_Item and C_Item.IsBoundToAccountUntilEquip and C_Item.IsBoundToAccountUntilEquip(itemLocation) then
         return "WuE", 0.45, 0.85, 1, true
+    end
+
+    if isSoulbound or (containerItemInfo and containerItemInfo.isBound) then
+        button.AngusUIItemLevelPending = nil
+        return nil
     end
 
     local itemLink = C_Container and C_Container.GetContainerItemLink and C_Container.GetContainerItemLink(containerID, slotID)
