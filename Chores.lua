@@ -250,7 +250,17 @@ function AngusUI:BuildChoresRows()
     local nightmareHuntsCompleted = math.max(0, math.min(preyData.nightmare or 0, 4))
     local preyWeeklyComplete = preyData.weekly == true
     local preyComplete = nightmareHuntsCompleted >= 4 and preyWeeklyComplete
-    table.insert(rows, CreateRowData("prey-nightmare", "Prey", nightmareHuntsCompleted >= 4, nightmareHuntsCompleted .. "/4 Nightmare Hunts", 20, { groupStart = true, sortComplete = preyComplete }))
+    local nightmareStatusText = nightmareHuntsCompleted .. "/4 Nightmare Hunts"
+    local nightmareUsesInlineStatusColor = false
+    if nightmareHuntsCompleted == 3 then
+        nightmareStatusText = "|cffffd133" .. nightmareStatusText .. "|r"
+        nightmareUsesInlineStatusColor = true
+    end
+    table.insert(rows, CreateRowData("prey-nightmare", "Prey", nightmareHuntsCompleted >= 4, nightmareStatusText, 20, {
+        groupStart = true,
+        inlineStatusColors = nightmareUsesInlineStatusColor,
+        sortComplete = preyComplete,
+    }))
     table.insert(rows, CreateRowData("prey-weekly", "", preyWeeklyComplete, "Weekly", 21, { hideBullet = true, sortComplete = preyComplete }))
 
     local hasProfessionRows = false
@@ -311,9 +321,13 @@ function AngusUI:BuildChoresRows()
     local gildedComplete = gildedStashesLooted >= 4
     local cofferKeysComplete = cofferKeyShardsRemaining <= 0
     local delveComplete = gildedComplete and trovehuntersBounty and cofferKeysComplete
+    local trovehuntersBountyStatus = "Trovehunter's Bounty: " .. tostring(trovehuntersBounty)
+    if self.IsTrovehunterBountyStatusUnknown and self:IsTrovehunterBountyStatusUnknown(characterData) then
+        trovehuntersBountyStatus = "Trovehunter's Bounty: Unknown"
+    end
 
     table.insert(rows, CreateRowData("delve-gildedStashesLooted", "Delve", gildedComplete, "Gilded Stashes looted: " .. gildedStashesLooted, 300, { groupStart = true, sortComplete = delveComplete }))
-    table.insert(rows, CreateRowData("delve-trovehuntersBounty", "", trovehuntersBounty, "Trovehunter's Bounty: " .. tostring(trovehuntersBounty), 301, { hideBullet = true, sortComplete = delveComplete }))
+    table.insert(rows, CreateRowData("delve-trovehuntersBounty", "", trovehuntersBounty, trovehuntersBountyStatus, 301, { hideBullet = true, sortComplete = delveComplete }))
     table.insert(rows, CreateRowData("delve-cofferKeyShardsRemaining", "", cofferKeysComplete, "Coffer Key Shards remaining until weekly limit: " .. cofferKeyShardsRemaining, 302, { hideBullet = true, sortComplete = delveComplete }))
 
     table.sort(rows, CompareRows)

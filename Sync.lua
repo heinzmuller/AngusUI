@@ -8,6 +8,7 @@ local restoredCofferKeyCurrencyID = 3028
 local firstWorldBossQuestIDs = { 92127, 92128, 92129, 92130 }
 local nightmareTaskQuestID = 94446
 local trovehunterBountyAuraSpellID = 1254631
+local trovehunterBountyPromptDialog = "ANGUSUI_TROVEHUNTER_BOUNTY_CONFIRM"
 local trackedCurrencyIDs = {
     3383,
     3341,
@@ -359,6 +360,42 @@ local function HasTrovehunterAura()
     return C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID and C_UnitAuras.GetPlayerAuraBySpellID(trovehunterBountyAuraSpellID) ~= nil
 end
 
+local function ShouldPromptForTrovehunterBounty(delvesData, hasConfirmedFalseState)
+    if not delvesData then
+        return false
+    end
+
+    if math.max(0, math.min(delvesData.gildedStashesLooted or 0, 4)) < 4 then
+        return false
+    end
+
+    if delvesData.trovehuntersBounty == true then
+        return false
+    end
+
+    return hasConfirmedFalseState ~= true
+end
+
+if StaticPopupDialogs and not StaticPopupDialogs[trovehunterBountyPromptDialog] then
+    StaticPopupDialogs[trovehunterBountyPromptDialog] = {
+        text = "This character has 4/4 Gilded Stashes, but Trovehunter's Bounty status is unknown. Did this character complete Trovehunter's Bounty this week?",
+        button1 = YES,
+        button2 = NO,
+        OnAccept = function()
+            AngusUI:SetTrovehunterBountyStatus(true)
+        end,
+        OnCancel = function(_, _, reason)
+            if reason == "clicked" then
+                AngusUI:SetTrovehunterBountyStatus(false)
+            end
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = STATICPOPUP_NUMDIALOGS,
+    }
+end
+
 local function GetGildedStashCountFromWidget()
     if not C_UIWidgetManager or not C_UIWidgetManager.GetSpellDisplayVisualizationInfo then
         return nil
@@ -427,6 +464,76 @@ function AngusUI:GetSyncAccountData()
     syncDB.account.warbandBank.tabs = syncDB.account.warbandBank.tabs or {}
 
     return syncDB.account
+end
+
+function AngusUI:SetTrovehunterBountyStatus(completed)
+    local characterData = self:GetSyncCharacterData()
+    local characterKey = GetCharacterStorageKey()
+    local weeklyResetKey = GetWeeklyResetKey()
+    if not characterData then
+        return
+    end
+
+    characterData.delves = characterData.delves or {}
+    characterData.delves.trovehuntersBounty = completed == true
+    characterData.lastChanged = GetCurrentDateTag()
+    characterData.lastChangedResetKey = weeklyResetKey
+    self.syncTrovehunterPromptPending = false
+
+    if self.GetSettingsDB and characterKey and weeklyResetKey then
+        local settingsDB = self:GetSettingsDB()
+        settingsDB.trovehunterBountyFalseConfirmed = settingsDB.trovehunterBountyFalseConfirmed or {}
+        if completed == true then
+            settingsDB.trovehunterBountyFalseConfirmed[characterKey] = nil
+        else
+            settingsDB.trovehunterBountyFalseConfirmed[characterKey] = weeklyResetKey
+        end
+    end
+
+    if self.RefreshChoresToast then
+        self:RefreshChoresToast()
+    end
+end
+
+function AngusUI:IsTrovehunterBountyStatusUnknown(characterData)
+    local delvesData = characterData and characterData.delves or nil
+    local characterKey = GetCharacterStorageKey()
+    local weeklyResetKey = characterData and characterData.weeklyResetKey or GetWeeklyResetKey()
+    local hasConfirmedFalseState = false
+
+    if self.GetSettingsDB and characterKey and weeklyResetKey then
+        local settingsDB = self:GetSettingsDB()
+        local confirmedFalseByCharacter = settingsDB.trovehunterBountyFalseConfirmed or nil
+        hasConfirmedFalseState = confirmedFalseByCharacter and confirmedFalseByCharacter[characterKey] == weeklyResetKey
+    end
+
+    return ShouldPromptForTrovehunterBounty(delvesData, hasConfirmedFalseState)
+end
+
+function AngusUI:MaybeShowTrovehunterBountyPrompt()
+    if not self.syncTrovehunterPromptPending then
+        return
+    end
+
+    local characterData = self:GetSyncCharacterData()
+    if not self:IsTrovehunterBountyStatusUnknown(characterData) then
+        self.syncTrovehunterPromptPending = false
+        return
+    end
+
+    self.syncTrovehunterPromptPending = false
+    if StaticPopup_Show then
+        StaticPopup_Show(trovehunterBountyPromptDialog)
+    end
+end
+
+function AngusUI:SyncHandlePlayerEnteringWorld(isInitialLogin, isReloadingUi)
+    if isInitialLogin or isReloadingUi then
+        self.syncTrovehunterPromptPending = true
+    end
+
+    self:SyncRefresh()
+    self:QueueSyncGildedRefresh()
 end
 
 function AngusUI:UpdateSyncCharacterWeekliesData(characterData, accountData)
@@ -526,7 +633,16 @@ function AngusUI:UpdateSyncCharacterDelvesData(characterData)
         gildedStashesLooted = existingDelvesData.gildedStashesLooted or 0
     end
 
-    local trovehuntersBounty = HasTrovehunterAura() or existingDelvesData.trovehuntersBounty == true
+    local trovehuntersBounty = existingDelvesData.trovehuntersBounty == true
+
+    if HasTrovehunterAura() then
+        trovehuntersBounty = true
+    end
+
+    if gildedStashesLooted < 4 then
+        trovehuntersBounty = false
+    end
+
     local cofferKeyShardsRemaining = existingDelvesData.cofferKeyShardsRemaining
     if cofferKeyShardsRemaining == nil then
         cofferKeyShardsRemaining = cofferKeyShardsWeeklyMaximum
@@ -859,6 +975,7 @@ function AngusUI:QueueSyncGildedRefresh()
     C_Timer.After(2, function()
         self.syncGildedRefreshQueued = false
         self:SyncRefresh()
+        self:MaybeShowTrovehunterBountyPrompt()
     end)
 end
 
@@ -895,5 +1012,6 @@ function AngusUI:SyncInit()
     self.syncInitialized = true
     self.syncAccountCurrencyRequestPending = false
     self.syncGildedRefreshQueued = false
+    self.syncTrovehunterPromptPending = false
     self:GetSyncDB()
 end
