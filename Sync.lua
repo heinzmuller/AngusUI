@@ -20,6 +20,7 @@ local trackedCurrencyIDs = {
     restoredCofferKeyCurrencyID,
 }
 local trackedCurrencyIDSet = {}
+local professionConcentrationCurrencyIDSet = {}
 local warbandBankTabSize = 98
 local timewalkingRaidWeeklyQuestByLfgID = {
     [744] = 47523,
@@ -330,6 +331,51 @@ local function GetProfessionConcentrationCurrencyID(info)
     return nil
 end
 
+local function GetProfessionInfosSnapshot()
+    if not C_TradeSkillUI then
+        return nil
+    end
+
+    if C_TradeSkillUI.GetChildProfessionInfos then
+        local professionInfos = C_TradeSkillUI.GetChildProfessionInfos()
+        if professionInfos and #professionInfos > 0 then
+            return professionInfos
+        end
+    end
+
+    if not C_TradeSkillUI.GetAllProfessionTradeSkillLines or not C_TradeSkillUI.GetProfessionInfoBySkillLineID then
+        return nil
+    end
+
+    local professionInfos = {}
+    local skillLineIDs = C_TradeSkillUI.GetAllProfessionTradeSkillLines() or {}
+    for _, skillLineID in ipairs(skillLineIDs) do
+        local professionInfo = C_TradeSkillUI.GetProfessionInfoBySkillLineID(skillLineID)
+        if professionInfo then
+            table.insert(professionInfos, professionInfo)
+        end
+    end
+
+    return next(professionInfos) and professionInfos or nil
+end
+
+local function BuildProfessionConcentrationCurrencyIDSet()
+    local currencyIDSet = {}
+
+    if not C_TradeSkillUI or not C_TradeSkillUI.GetConcentrationCurrencyID then
+        return currencyIDSet
+    end
+
+    for _, professionInfo in ipairs(GetProfessionInfosSnapshot() or {}) do
+        local currencyID = GetProfessionConcentrationCurrencyID(professionInfo)
+        if currencyID then
+            currencyIDSet[currencyID] = true
+        end
+    end
+
+    return currencyIDSet
+end
+
 local function NormalizeProfessionName(name)
     if type(name) ~= "string" then
         return nil
@@ -542,11 +588,11 @@ function AngusUI:BuildProfessionSyncSnapshot(existingProfessions)
 end
 
 function AngusUI:GetProfessionConcentrationSnapshot(knownProfessions)
-    if not C_TradeSkillUI or not C_TradeSkillUI.GetChildProfessionInfos then
+    if not C_TradeSkillUI then
         return nil
     end
 
-    local professionInfos = C_TradeSkillUI.GetChildProfessionInfos()
+    local professionInfos = GetProfessionInfosSnapshot()
     if not professionInfos then
         return nil
     end
@@ -937,9 +983,27 @@ function AngusUI:QueueSyncGildedRefresh()
     end)
 end
 
+function AngusUI:QueueProfessionConcentrationRefresh(delaySeconds)
+    if self.syncProfessionConcentrationRefreshQueued then
+        return
+    end
+
+    self.syncProfessionConcentrationRefreshQueued = true
+    C_Timer.After(delaySeconds or 2, function()
+        self.syncProfessionConcentrationRefreshQueued = false
+        professionConcentrationCurrencyIDSet = BuildProfessionConcentrationCurrencyIDSet()
+        self:SyncRefresh(true)
+    end)
+end
+
 function AngusUI:SyncHandleCurrencyUpdate(currencyID)
     if currencyID == gildedStashCurrencyID then
         self:QueueSyncGildedRefresh()
+        return
+    end
+
+    if currencyID and professionConcentrationCurrencyIDSet[currencyID] then
+        self:QueueProfessionConcentrationRefresh(0.5)
         return
     end
 
@@ -970,5 +1034,9 @@ function AngusUI:SyncInit()
     self.syncInitialized = true
     self.syncAccountCurrencyRequestPending = false
     self.syncGildedRefreshQueued = false
+    self.syncProfessionConcentrationRefreshQueued = false
+    professionConcentrationCurrencyIDSet = BuildProfessionConcentrationCurrencyIDSet()
     self:GetSyncDB()
+
+    self:QueueProfessionConcentrationRefresh(3)
 end
