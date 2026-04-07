@@ -322,9 +322,6 @@ function AngusUI:BuildChoresRows()
     local cofferKeysComplete = cofferKeyShardsRemaining <= 0
     local delveComplete = gildedComplete and trovehuntersBounty and cofferKeysComplete
     local trovehuntersBountyStatus = "Trovehunter's Bounty: " .. tostring(trovehuntersBounty)
-    if self.IsTrovehunterBountyStatusUnknown and self:IsTrovehunterBountyStatusUnknown(characterData) then
-        trovehuntersBountyStatus = "Trovehunter's Bounty: Unknown"
-    end
 
     table.insert(rows, CreateRowData("delve-gildedStashesLooted", "Delve", gildedComplete, "Gilded Stashes looted: " .. gildedStashesLooted, 300, { groupStart = true, sortComplete = delveComplete }))
     table.insert(rows, CreateRowData("delve-trovehuntersBounty", "", trovehuntersBounty, trovehuntersBountyStatus, 301, { hideBullet = true, sortComplete = delveComplete }))

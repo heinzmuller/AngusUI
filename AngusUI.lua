@@ -115,22 +115,17 @@ frame:SetScript(
         end
 
         if (event == "PLAYER_ENTERING_WORLD") then
-            local isInitialLogin, isReloadingUi = ...
             AngusUI:EnableActionRangeOverlay()
             AngusUI:ApplyTheme()
             AngusUI:FriendsFrame()
             AngusUI:CharacterPanel()
             AngusUI:TalentRecommendations()
             AngusUI:PartyFrames()
-            if AngusUI.SyncHandlePlayerEnteringWorld then
-                AngusUI:SyncHandlePlayerEnteringWorld(isInitialLogin, isReloadingUi)
-            else
-                if AngusUI.SyncRefresh then
-                    AngusUI:SyncRefresh()
-                end
-                if AngusUI.QueueSyncGildedRefresh then
-                    AngusUI:QueueSyncGildedRefresh()
-                end
+            if AngusUI.SyncRefresh then
+                AngusUI:SyncRefresh()
+            end
+            if AngusUI.QueueSyncGildedRefresh then
+                AngusUI:QueueSyncGildedRefresh()
             end
             AngusUI:ShowChoresToast()
         end
