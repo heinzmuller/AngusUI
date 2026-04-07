@@ -72,6 +72,22 @@ local nightmarePreyQuestIDs = {
     91260, 91261, 91262, 91263, 91264,
     91265, 91266, 91267, 91268, 91269,
 }
+local hardPreyQuestIDs = {
+    91210, 91212, 91214, 91216, 91218,
+    91220, 91222, 91224, 91226, 91228,
+    91230, 91232, 91234, 91236, 91238,
+    91240, 91242, 91243, 91244, 91245,
+    91246, 91247, 91248, 91249, 91250,
+    91251, 91252, 91253, 91254, 91255,
+}
+local normalPreyQuestIDs = {
+    91095, 91096, 91097, 91098, 91099,
+    91100, 91101, 91102, 91103, 91104,
+    91105, 91106, 91107, 91108, 91109,
+    91110, 91111, 91112, 91113, 91114,
+    91115, 91116, 91117, 91118, 91119,
+    91120, 91121, 91122, 91123, 91124,
+}
 
 local function IsQuestComplete(questID)
     if not questID or questID <= 0 then
@@ -314,6 +330,60 @@ local function GetProfessionConcentrationCurrencyID(info)
     return nil
 end
 
+local function NormalizeProfessionName(name)
+    if type(name) ~= "string" then
+        return nil
+    end
+
+    local normalizedName = strtrim(name):lower():gsub("[%s%p]", "")
+    if normalizedName == "" then
+        return nil
+    end
+
+    return normalizedName
+end
+
+local function ResolveProfessionSyncName(rawName, knownProfessions)
+    if type(rawName) ~= "string" or type(knownProfessions) ~= "table" then
+        return nil
+    end
+
+    if knownProfessions[rawName] then
+        return rawName
+    end
+
+    local normalizedRawName = NormalizeProfessionName(rawName)
+    if not normalizedRawName then
+        return nil
+    end
+
+    local bestMatch = nil
+    local bestMatchLength = 0
+
+    for professionName, _ in pairs(knownProfessions) do
+        local normalizedProfessionName = NormalizeProfessionName(professionName)
+        if normalizedProfessionName then
+            if normalizedProfessionName == normalizedRawName then
+                return professionName
+            end
+
+            if
+                normalizedRawName:find(normalizedProfessionName, 1, true) or
+                normalizedProfessionName:find(normalizedRawName, 1, true)
+            then
+                if #normalizedProfessionName > bestMatchLength then
+                    bestMatch = professionName
+                    bestMatchLength = #normalizedProfessionName
+                elseif #normalizedProfessionName == bestMatchLength and bestMatch ~= professionName then
+                    bestMatch = nil
+                end
+            end
+        end
+    end
+
+    return bestMatch
+end
+
 local function AreTablesEqual(left, right)
     if left == right then
         return true
@@ -471,7 +541,7 @@ function AngusUI:BuildProfessionSyncSnapshot(existingProfessions)
     return professions
 end
 
-function AngusUI:GetProfessionConcentrationSnapshot()
+function AngusUI:GetProfessionConcentrationSnapshot(knownProfessions)
     if not C_TradeSkillUI or not C_TradeSkillUI.GetChildProfessionInfos then
         return nil
     end
@@ -486,10 +556,11 @@ function AngusUI:GetProfessionConcentrationSnapshot()
 
     for _, professionInfo in ipairs(professionInfos) do
         local professionName = professionInfo and professionInfo.professionName
+        local resolvedProfessionName = ResolveProfessionSyncName(professionName, knownProfessions)
         local currencyID = GetProfessionConcentrationCurrencyID(professionInfo)
         local currencyInfo = currencyID and GetCurrencyInfoByID(currencyID)
-        if professionName and currencyInfo then
-            concentrationSnapshot[professionName] = {
+        if resolvedProfessionName and currencyInfo then
+            concentrationSnapshot[resolvedProfessionName] = {
                 current = currencyInfo.quantity or 0,
                 timestamp = timestamp,
             }
@@ -499,6 +570,7 @@ function AngusUI:GetProfessionConcentrationSnapshot()
     local skillLineID, skillLineDisplayName, _, _, _, parentSkillLineID, parentSkillLineDisplayName = C_TradeSkillUI.GetTradeSkillLine and C_TradeSkillUI.GetTradeSkillLine() or nil
     local currentProfessionName = parentSkillLineDisplayName or skillLineDisplayName
     if currentProfessionName then
+        local resolvedProfessionName = ResolveProfessionSyncName(currentProfessionName, knownProfessions)
         local fallbackCurrencyID = nil
         if C_TradeSkillUI.GetConcentrationCurrencyID then
             fallbackCurrencyID = skillLineID and C_TradeSkillUI.GetConcentrationCurrencyID(skillLineID) or nil
@@ -508,8 +580,8 @@ function AngusUI:GetProfessionConcentrationSnapshot()
         end
 
         local fallbackCurrencyInfo = fallbackCurrencyID and GetCurrencyInfoByID(fallbackCurrencyID)
-        if fallbackCurrencyInfo then
-            concentrationSnapshot[currentProfessionName] = {
+        if resolvedProfessionName and fallbackCurrencyInfo then
+            concentrationSnapshot[resolvedProfessionName] = {
                 current = fallbackCurrencyInfo.quantity or 0,
                 timestamp = timestamp,
             }
@@ -559,13 +631,15 @@ end
 
 function AngusUI:UpdateSyncCharacterPreyData(characterData)
     local existingPreyData = characterData.prey or {}
-    local nightmare = math.min(CountCompletedQuests(nightmarePreyQuestIDs), 4)
-    local weekly = IsQuestComplete(nightmareTaskQuestID) or nightmare >= 3
+    local normal = CountCompletedQuests(normalPreyQuestIDs)
+    local hard = CountCompletedQuests(hardPreyQuestIDs)
+    local nightmare = CountCompletedQuests(nightmarePreyQuestIDs)
+    local weekly = IsQuestComplete(nightmareTaskQuestID)
     local preyData = {
+        normal = normal,
+        hard = hard,
         nightmare = nightmare,
         weekly = weekly,
-        hard = existingPreyData.hard or 0,
-        normal = existingPreyData.normal or 0,
     }
 
     if AreTablesEqual(existingPreyData, preyData) then
@@ -628,7 +702,7 @@ function AngusUI:UpdateSyncCharacterGoldData(characterData)
 end
 
 function AngusUI:UpdateSyncCharacterProfessionConcentrationData(characterData)
-    local concentrationSnapshot = self:GetProfessionConcentrationSnapshot()
+    local concentrationSnapshot = self:GetProfessionConcentrationSnapshot(characterData.professions)
     if not concentrationSnapshot then
         return false
     end

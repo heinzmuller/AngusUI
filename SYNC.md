@@ -136,10 +136,10 @@ AngusUICharacterSyncDB = {
         cofferKeyShardsRemaining = 600,
     },
     prey = {
+        normal = 0,
+        hard = 0,
         nightmare = 0,
         weekly = false,
-        hard = 0,
-        normal = 0,
     },
     professions = {
         ProfessionName = {
@@ -221,10 +221,10 @@ AngusUICharacterSyncDB = {
         cofferKeyShardsRemaining = 600,
     },
     prey = {
+        normal = 0,
+        hard = 0,
         nightmare = 0,
         weekly = false,
-        hard = 0,
-        normal = 0,
     },
     professions = {
         Alchemy = {
@@ -282,10 +282,10 @@ AngusUICharacterSyncDB = {
         cofferKeyShardsRemaining = 240,
     },
     prey = {
+        normal = 3,
+        hard = 1,
         nightmare = 3,
-        weekly = true,
-        hard = 0,
-        normal = 0,
+        weekly = false,
     },
     professions = {
         Alchemy = {
@@ -345,10 +345,10 @@ AngusUICharacterSyncDB = {
         cofferKeyShardsRemaining = 0,
     },
     prey = {
+        normal = 4,
+        hard = 2,
         nightmare = 4,
         weekly = true,
-        hard = 0,
-        normal = 0,
     },
     professions = {
         Blacksmithing = {
@@ -412,6 +412,10 @@ AngusUICharacterSyncDB = {
   stored in the per-character saved-variable file.
 - `AngusUICharacterSyncDB.weeklies` is a sorted array of completed tracked
   weekly quest IDs for the currently active `account.weeklyQuests` set.
+- `prey.normal`, `prey.hard`, and `prey.nightmare` are tracked separately and
+  each store a weekly `0..4` completion count for that difficulty.
+- `prey.weekly` reflects only whether `A Nightmarish Task` is completed for the
+  current week.
 - Warband bank item snapshots update when the addon can read account-bank
   contents; if the bank is not currently accessible, the last known item snapshot
   is preserved while gold may still update.
