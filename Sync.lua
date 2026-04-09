@@ -210,7 +210,7 @@ local function GetContainerItemIDAndCount(containerID, slotID)
         end
 
         if type(itemLink) == "string" then
-            itemID = tonumber(itemLink:match("item:(%d+)"))
+            itemID = tonumber(strmatch(itemLink, "item:(%d+)"))
         end
     end
 
@@ -364,7 +364,8 @@ local function NormalizeProfessionName(name)
         return nil
     end
 
-    local normalizedName = strtrim(name):lower():gsub("[%s%p]", "")
+    local normalizedName = strlower(strtrim(name))
+    normalizedName = gsub(normalizedName, "[%s%p]", "")
     if normalizedName == "" then
         return nil
     end
@@ -397,8 +398,8 @@ local function ResolveProfessionSyncName(rawName, knownProfessions)
             end
 
             if
-                normalizedRawName:find(normalizedProfessionName, 1, true) or
-                normalizedProfessionName:find(normalizedRawName, 1, true)
+                strfind(normalizedRawName, normalizedProfessionName, 1, true) or
+                strfind(normalizedProfessionName, normalizedRawName, 1, true)
             then
                 if #normalizedProfessionName > bestMatchLength then
                     bestMatch = professionName

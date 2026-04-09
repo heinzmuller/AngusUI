@@ -21,9 +21,9 @@ function AngusUI:UI()
         return
     end
 
-    local activeLayoutName = activeLayout.layoutName:lower()
+    local activeLayoutName = strlower(activeLayout.layoutName)
 
-    if not activeLayoutName:find("angusui") then
+    if not strfind(activeLayoutName, "angusui") then
         return
     end
 
@@ -36,13 +36,13 @@ function AngusUI:UI()
     local bestMatchedRatio
 
     for i, layout in ipairs(layouts.layouts) do
-        local layoutName = layout.layoutName:lower()
+        local layoutName = strlower(layout.layoutName)
         local layoutRatioCount = 0
         local layoutBestDistance
         local layoutBestRatio
 
-        if layoutName:find("angusui") then
-            for width, height in layoutName:gmatch("(%d+):(%d+)") do
+        if strfind(layoutName, "angusui") then
+            for width, height in gmatch(layoutName, "(%d+):(%d+)") do
                 local ratioWidth = tonumber(width)
                 local ratioHeight = tonumber(height)
 

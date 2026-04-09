@@ -52,7 +52,7 @@ function AngusUI:Print(...)
 end
 
 local function SlashCommand(command)
-    command = command and strtrim(command):lower() or ""
+    command = command and strlower(strtrim(command)) or ""
 
     local commands = {
         back = function() AngusUI:TeleportBack() end,
@@ -78,6 +78,10 @@ function frame:ADDON_LOADED(self, addon)
     if (addon == "AngusUI") then
         if AngusUI.SettingsInit then
             AngusUI:SettingsInit()
+        end
+
+        if AngusUI.GreatVaultInit then
+            AngusUI:GreatVaultInit()
         end
 
         if AngusUI.ChoresInit then

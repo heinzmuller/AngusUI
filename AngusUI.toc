@@ -12,6 +12,7 @@ Screenshots.lua
 ItemOverlays.lua
 CharacterPanel.lua
 Chores.lua
+GreatVault.lua
 Sync.lua
 Crests.lua
 FriendsFrame.lua

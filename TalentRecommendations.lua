@@ -399,11 +399,10 @@ local function FormatStatsText(statsText)
         return ""
     end
 
-    return statsText
-        :gsub("%s+>>%s+", " |cffff7a00>>|r ")
-        :gsub("%s+>=%s+", " |cff58c4dd>=|r ")
-        :gsub("%s+=%s+", " |cff7fb8ff=|r ")
-        :gsub("%s+>%s+", " |cffffe066>|r ")
+    statsText = gsub(statsText, "%s+>>%s+", " |cffff7a00>>|r ")
+    statsText = gsub(statsText, "%s+>=%s+", " |cff58c4dd>=|r ")
+    statsText = gsub(statsText, "%s+=%s+", " |cff7fb8ff=|r ")
+    return gsub(statsText, "%s+>%s+", " |cffffe066>|r ")
 end
 
 local function ShowTalentString(section, tabData)
