@@ -574,6 +574,23 @@ local function UpdateBankBindOverlay(button)
     UpdateBindOverlay(button, button:GetBankTabID(), button:GetContainerSlotID())
 end
 
+local function RefreshBagItemButton(itemButton)
+    if not itemButton or not itemButton.GetBagID or not itemButton.GetID then
+        return
+    end
+
+    local bagID = itemButton:GetBagID()
+    local slotID = itemButton:GetID()
+    if bagID == nil or slotID == nil then
+        return
+    end
+
+    local itemLevel, quality = GetBagItemLevel(itemButton)
+    UpdateOverlay(itemButton, itemLevel, 10, 1, quality)
+    UpdateDesaturation(itemButton, GetContainerItemQuality(bagID, slotID))
+    UpdateBagBindOverlay(itemButton)
+end
+
 local function HookBagFrame(frame)
     if not frame or frame.AngusUIItemLevelHooked then
         return
@@ -622,6 +639,14 @@ local function HookFrames(self)
         self.bankItemButtonHooked = true
     end
 
+    if ContainerFrameItemButtonMixin and ContainerFrameItemButtonMixin.Update and not self.bagItemButtonHooked then
+        hooksecurefunc(ContainerFrameItemButtonMixin, "Update", function(itemButton)
+            RefreshBagItemButton(itemButton)
+        end)
+
+        self.bagItemButtonHooked = true
+    end
+
     HookBagFrame(ContainerFrameCombinedBags)
 
     for index = 1, NUM_CONTAINER_FRAMES or 6 do
@@ -650,10 +675,7 @@ local function RefreshBagFrameItemLevels(frame)
     end
 
     for _, itemButton in frame:EnumerateValidItems() do
-        local itemLevel, quality = GetBagItemLevel(itemButton)
-        UpdateOverlay(itemButton, itemLevel, 10, 1, quality)
-        UpdateDesaturation(itemButton, GetContainerItemQuality(itemButton:GetBagID(), itemButton:GetID()))
-        UpdateBagBindOverlay(itemButton)
+        RefreshBagItemButton(itemButton)
     end
 end
 

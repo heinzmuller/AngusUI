@@ -3,6 +3,7 @@ local _, AngusUI = ...
 local lootSpecToastWidth = 280
 local lootSpecToastMinHeight = 84
 local lootSpecToastPadding = 16
+local GREAT_VAULT_ZONE_NAME = "Silvermoon City"
 
 local function EnsureBackdrop(frame)
     if frame.backdrop then
@@ -44,37 +45,29 @@ local function GetCurrentLootSpecializationName()
     return nil
 end
 
-local function NormalizeTooltipTitle(text)
-    if type(text) ~= "string" then
-        return nil
-    end
-
-    text = gsub(text, "|c%x%x%x%x%x%x%x%x", "")
-    text = gsub(text, "|r", "")
-    return strlower(text)
+local function IsInGreatVaultZone()
+    return GetRealZoneText and GetRealZoneText() == GREAT_VAULT_ZONE_NAME
 end
 
-local greatVaultTooltipTitles = {
-    ["the great vault"] = true,
-}
+local function IsGreatVaultFrame(frame)
+    while frame do
+        local frameName = frame.GetName and frame:GetName() or nil
+        if frameName and (strfind(frameName, "WeeklyRewards", 1, true) or strfind(frameName, "GreatVault", 1, true)) then
+            return true
+        end
 
-if type(WEEKLY_REWARDS_TITLE) == "string" then
-    greatVaultTooltipTitles[NormalizeTooltipTitle(WEEKLY_REWARDS_TITLE)] = true
+        frame = frame.GetParent and frame:GetParent() or nil
+    end
+
+    return false
 end
 
 local function IsHoveringGreatVault()
-    if not GameTooltip or not GameTooltip:IsShown() then
+    if not IsInGreatVaultZone() or not GameTooltip or not GameTooltip:IsShown() then
         return false
     end
 
-    local tooltipName = GameTooltip:GetName()
-    if not tooltipName then
-        return false
-    end
-
-    local title = _G[tooltipName .. "TextLeft1"]
-    local titleText = title and title:GetText() or nil
-    return greatVaultTooltipTitles[NormalizeTooltipTitle(titleText)] == true
+    return IsGreatVaultFrame(GameTooltip:GetOwner())
 end
 
 local function EnsureLootSpecToast(self)
