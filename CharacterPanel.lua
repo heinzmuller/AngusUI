@@ -73,9 +73,9 @@ local function RefreshCharacterStatsItemLevel()
     maxText:Show()
 end
 
-function AngusUI:CharacterPanel()
-    if self.ItemOverlays then
-        self:ItemOverlays()
+function AngusUI:RefreshCharacterPanel()
+    if self.RefreshInventoryOverlays then
+        self:RefreshInventoryOverlays()
     end
 
     RefreshCharacterStatsItemLevel()

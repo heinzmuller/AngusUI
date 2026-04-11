@@ -99,7 +99,7 @@ function frame:ADDON_LOADED(self, addon)
     end
 
     if (addon == "Blizzard_CharacterUI") then
-        AngusUI:CharacterPanel()
+        AngusUI:RefreshCharacterPanel()
     end
 
     if (addon == "Blizzard_PlayerSpells") then
@@ -122,7 +122,7 @@ frame:SetScript(
             AngusUI:EnableActionRangeOverlay()
             AngusUI:ApplyTheme()
             AngusUI:FriendsFrame()
-            AngusUI:CharacterPanel()
+            AngusUI:RefreshCharacterPanel()
             AngusUI:TalentRecommendations()
             AngusUI:PartyFrames()
             if AngusUI.SyncRefresh then
@@ -193,7 +193,7 @@ frame:SetScript(
         end
 
         if (event == "PLAYER_EQUIPMENT_CHANGED") or (event == "GET_ITEM_INFO_RECEIVED") or (event == "BAG_UPDATE_DELAYED") then
-            AngusUI:CharacterPanel()
+            AngusUI:RefreshCharacterPanel()
         end
 
         if
