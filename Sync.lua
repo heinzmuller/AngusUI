@@ -5,7 +5,12 @@ local gildedStashCurrencyID = 3290
 local cofferKeyShardsCurrencyID = 3310
 local cofferKeyShardsWeeklyMaximum = 600
 local restoredCofferKeyCurrencyID = 3028
-local firstWorldBossQuestIDs = { 92127, 92128, 92129, 92130 }
+local firstWorldBossQuestIDs = {
+    92034, -- Thorm'belan
+    92123, -- Cragpine
+    92560, -- Lu'ashal
+    92636, -- Predaxas
+}
 local nightmareTaskQuestID = 94446
 local trovehunterBountyAuraSpellID = 1254631
 local trackedCurrencyIDs = {
@@ -921,15 +926,11 @@ function AngusUI:UpdateSyncAccountData()
 
     if weeklyResetKey and accountData.weeklyResetKey ~= weeklyResetKey then
         accountData.weeklyResetKey = weeklyResetKey
-        accountData.firstWorldBoss = false
         accountData.weeklyQuests = {}
     end
 
-    if IsAnyQuestComplete(firstWorldBossQuestIDs) then
-        accountData.firstWorldBoss = true
-    elseif accountData.firstWorldBoss == nil then
-        accountData.firstWorldBoss = false
-    end
+    -- Recompute each refresh so stale values from older quest lists do not persist until reset.
+    accountData.firstWorldBoss = IsAnyQuestComplete(firstWorldBossQuestIDs)
 
     self:UpdateSyncAccountCurrenciesData(accountData)
     self:UpdateSyncAccountWeeklyQuestsData(accountData)
