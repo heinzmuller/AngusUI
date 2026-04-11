@@ -76,6 +76,10 @@ SlashCmdList.ANGUSUI = SlashCommand
 SLASH_ANGUSUI1, SLASH_ANGUSUI2 = "/angusui", "/aui"
 function frame:ADDON_LOADED(self, addon)
     if (addon == "AngusUI") then
+        if AngusUI.BankInit then
+            AngusUI:BankInit()
+        end
+
         if AngusUI.SettingsInit then
             AngusUI:SettingsInit()
         end
@@ -100,6 +104,12 @@ function frame:ADDON_LOADED(self, addon)
 
     if (addon == "Blizzard_CharacterUI") then
         AngusUI:RefreshCharacterPanel()
+    end
+
+    if (addon == "Blizzard_UIPanels_Game") then
+        if AngusUI.BankInit then
+            AngusUI:BankInit()
+        end
     end
 
     if (addon == "Blizzard_PlayerSpells") then
