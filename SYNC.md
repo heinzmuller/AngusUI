@@ -70,6 +70,8 @@ The goals for this structure are:
 - Treat `weeklies` as the list of tracked active weekly quest IDs completed by that
   character this reset.
 - Treat `professions` as a sparse map of learned professions only.
+- Treat `professions[professionName].skillLevel` as the character's current skill
+  rank for that learned profession snapshot.
 - Treat `AngusUICharacterSyncDB` as a single-character payload with no
   `characters[...]` wrapper.
 - Treat account and character sync data as separate payloads coming from
@@ -143,6 +145,7 @@ AngusUICharacterSyncDB = {
     },
     professions = {
         ProfessionName = {
+            skillLevel = 100,
             treatise = false,
             weekly = false,
             treasuresRemaining = 2,
@@ -228,6 +231,7 @@ AngusUICharacterSyncDB = {
     },
     professions = {
         Alchemy = {
+            skillLevel = 100,
             treatise = false,
             weekly = false,
             treasuresRemaining = 2,
@@ -237,6 +241,7 @@ AngusUICharacterSyncDB = {
             },
         },
         Herbalism = {
+            skillLevel = 100,
             treatise = false,
             weekly = false,
             treasuresRemaining = 2,
@@ -289,6 +294,7 @@ AngusUICharacterSyncDB = {
     },
     professions = {
         Alchemy = {
+            skillLevel = 91,
             treatise = true,
             weekly = false,
             treasuresRemaining = 1,
@@ -298,6 +304,7 @@ AngusUICharacterSyncDB = {
             },
         },
         Herbalism = {
+            skillLevel = 78,
             treatise = false,
             weekly = true,
             treasuresRemaining = 0,
@@ -352,6 +359,7 @@ AngusUICharacterSyncDB = {
     },
     professions = {
         Blacksmithing = {
+            skillLevel = 100,
             treatise = true,
             weekly = true,
             treasuresRemaining = 0,
@@ -361,6 +369,7 @@ AngusUICharacterSyncDB = {
             },
         },
         Mining = {
+            skillLevel = 100,
             treatise = true,
             weekly = true,
             treasuresRemaining = 0,
@@ -420,6 +429,8 @@ AngusUICharacterSyncDB = {
   contents; if the bank is not currently accessible, the last known item snapshot
   is preserved while gold may still update.
 - `professions` only contains learned professions for that character.
+- `professions[professionName].skillLevel` stores the current profession skill
+  rank captured from the live profession APIs.
 - `greatVault` only stores unlocked reward rows as item-level arrays.
 - `currencies` stores tracked currency snapshots as `currencyID = count`.
 - `gold` stores the character's current on-hand gold value in copper; divide by

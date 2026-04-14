@@ -419,6 +419,42 @@ local function ResolveProfessionSyncName(rawName, knownProfessions)
     return bestMatch
 end
 
+local function BuildProfessionNameLookup(professionDefinitions)
+    local professionNames = {}
+
+    for _, profession in ipairs(professionDefinitions or {}) do
+        if profession.name then
+            professionNames[profession.name] = true
+        end
+    end
+
+    return professionNames
+end
+
+local function GetProfessionSkillSnapshot(knownProfessions)
+    if not GetProfessions or not GetProfessionInfo then
+        return {}
+    end
+
+    local professionSkillLevels = {}
+
+    for _, professionIndex in pairs({ GetProfessions() }) do
+        if professionIndex then
+            local professionName, _, skillLevel, _, _, _, _, _, _, _, skillLineName = GetProfessionInfo(professionIndex)
+            local resolvedProfessionName = ResolveProfessionSyncName(professionName, knownProfessions)
+            if not resolvedProfessionName then
+                resolvedProfessionName = ResolveProfessionSyncName(skillLineName, knownProfessions)
+            end
+
+            if resolvedProfessionName then
+                professionSkillLevels[resolvedProfessionName] = skillLevel or 0
+            end
+        end
+    end
+
+    return professionSkillLevels
+end
+
 local function AreTablesEqual(left, right)
     if left == right then
         return true
@@ -555,16 +591,28 @@ function AngusUI:UpdateSyncAccountWeeklyQuestsData(accountData)
 end
 
 function AngusUI:BuildProfessionSyncSnapshot(existingProfessions)
+    local professionDefinitions = self:GetCurrentProfessionSyncData()
+    local professionSkillLevels = GetProfessionSkillSnapshot(BuildProfessionNameLookup(professionDefinitions))
     local professions = {}
 
-    for _, profession in ipairs(self:GetCurrentProfessionSyncData()) do
+    for _, profession in ipairs(professionDefinitions) do
         if IsProfessionLearned(profession.spellID) then
             local treatiseComplete = profession.treatise == nil or IsAnyQuestComplete(profession.treatise)
             local weeklyComplete = profession.weekly == nil or IsAnyQuestComplete(profession.weekly)
             local treasureCompleted, treasureTotal = CountCompletedSources(profession.treasures)
             local previousProfessionData = existingProfessions and existingProfessions[profession.name]
+            local skillLevel = professionSkillLevels[profession.name]
+
+            if skillLevel == nil and previousProfessionData then
+                skillLevel = previousProfessionData.skillLevel
+            end
+
+            if skillLevel == nil then
+                skillLevel = 0
+            end
 
             professions[profession.name] = {
+                skillLevel = skillLevel,
                 treatise = treatiseComplete,
                 weekly = weeklyComplete,
                 treasuresRemaining = math.max(treasureTotal - treasureCompleted, 0),
