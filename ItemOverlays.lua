@@ -40,6 +40,21 @@ local bagEquipLocations = {
     INVTYPE_RANGEDRIGHT = true,
 }
 
+local midnightAlwaysEnchantableSlots = {
+    [INVSLOT_CHEST] = true,
+    [INVSLOT_FINGER1] = true,
+    [INVSLOT_FINGER2] = true,
+}
+
+local midnightWeaponEnchantLocations = {
+    INVTYPE_2HWEAPON = true,
+    INVTYPE_RANGED = true,
+    INVTYPE_RANGEDRIGHT = true,
+    INVTYPE_WEAPON = true,
+    INVTYPE_WEAPONMAINHAND = true,
+    INVTYPE_WEAPONOFFHAND = true,
+}
+
 local slotFrames = {
     { slotId = INVSLOT_HEAD, frameName = "CharacterHeadSlot" },
     { slotId = INVSLOT_NECK, frameName = "CharacterNeckSlot" },
@@ -292,6 +307,30 @@ local function GetOrCreateBindText(button)
     return text
 end
 
+local function GetOrCreateMissingEnchantText(button)
+    if not button then
+        return nil
+    end
+
+    local overlay = PrepareItemButton(button)
+    if not overlay then
+        return nil
+    end
+
+    local text = button.AngusUIMissingEnchantText
+    if not text then
+        text = overlay:CreateFontString(nil, "OVERLAY")
+        text:SetJustifyH("CENTER")
+        text:SetShadowOffset(1, -1)
+        text:SetShadowColor(0, 0, 0, 1)
+        button.AngusUIMissingEnchantText = text
+    end
+
+    text:SetFont(Inconsolata, 10, "OUTLINE")
+
+    return text
+end
+
 local function GetOrCreateOverlayBackground(button, key)
     if not button then
         return nil
@@ -313,6 +352,52 @@ local function GetOrCreateOverlayBackground(button, key)
     return background
 end
 
+local function GetButtonIcon(button)
+    if not button then
+        return nil
+    end
+
+    if button.icon then
+        return button.icon
+    end
+
+    if button.Icon then
+        return button.Icon
+    end
+
+    if button.GetName then
+        local name = button:GetName()
+        if name then
+            return _G[name .. "Icon"] or _G[name .. "IconTexture"]
+        end
+    end
+
+    return nil
+end
+
+local function GetOrCreateJunkIcon(button)
+    if not button then
+        return nil
+    end
+
+    local overlay = PrepareItemButton(button)
+    if not overlay then
+        return nil
+    end
+
+    local icon = button.AngusUIJunkIcon
+    if not icon then
+        icon = overlay:CreateTexture(nil, "OVERLAY")
+        icon:SetAtlas("auctionhouse-icon-coin-gold")
+        icon:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
+        icon:SetSize(12, 12)
+        icon:Hide()
+        button.AngusUIJunkIcon = icon
+    end
+
+    return icon
+end
+
 local function HideTextOverlay(text, background)
     if text then
         text:SetText("")
@@ -331,6 +416,17 @@ local function HideButtonOverlays(button)
 
     HideTextOverlay(button.AngusUIItemLevelText, button.AngusUIItemLevelBackground)
     HideTextOverlay(button.AngusUIBindText, button.AngusUIBindBackground)
+    HideTextOverlay(button.AngusUIMissingEnchantText)
+
+    local icon = GetButtonIcon(button)
+    if icon and icon.SetDesaturated then
+        icon:SetDesaturated(false)
+        icon:SetVertexColor(1, 1, 1)
+    end
+
+    if button.AngusUIJunkIcon then
+        button.AngusUIJunkIcon:Hide()
+    end
 end
 
 local function HideCharacterItemLevelOverlays()
@@ -462,6 +558,11 @@ local function GetContainerQuality(containerID, slotID)
     return containerItemInfo and containerItemInfo.quality or nil
 end
 
+local function IsJunkContainerItem(containerID, slotID)
+    local containerItemInfo = C_Container and C_Container.GetContainerItemInfo and C_Container.GetContainerItemInfo(containerID, slotID)
+    return containerItemInfo and containerItemInfo.quality == ITEM_QUALITY_POOR and containerItemInfo.hasNoValue ~= true
+end
+
 local function GetContainerBindData(containerID, slotID)
     local itemLocation = ItemLocation:CreateFromBagAndSlot(containerID, slotID)
     local containerItemInfo = C_Container and C_Container.GetContainerItemInfo and C_Container.GetContainerItemInfo(containerID, slotID)
@@ -503,6 +604,71 @@ local function GetContainerBindData(containerID, slotID)
     return nil
 end
 
+local function GetPermanentEnchantId(itemLink)
+    if type(itemLink) ~= "string" then
+        return nil
+    end
+
+    local enchantId = tonumber(itemLink:match("item:[^:]*:([^:]+)"))
+    if enchantId and enchantId > 0 then
+        return enchantId
+    end
+
+    return nil
+end
+
+local function IsMidnightEnchantableWeapon(itemEquipLoc)
+    return midnightWeaponEnchantLocations[itemEquipLoc] == true
+end
+
+local function IsMidnightEnchantableSlot(slotID, itemLink, itemID)
+    if midnightAlwaysEnchantableSlots[slotID] then
+        return true
+    end
+
+    if slotID ~= INVSLOT_MAINHAND and slotID ~= INVSLOT_OFFHAND then
+        return false
+    end
+
+    if not C_Item or not C_Item.GetItemInfoInstant then
+        return false
+    end
+
+    local itemEquipLoc = select(4, C_Item.GetItemInfoInstant(itemLink or itemID))
+    return IsMidnightEnchantableWeapon(itemEquipLoc)
+end
+
+local function PositionMissingEnchantText(button, text)
+    text:ClearAllPoints()
+
+    local buttonCenterX = button.GetCenter and button:GetCenter() or nil
+    local parent = button.GetParent and button:GetParent() or nil
+    local parentCenterX = parent and parent.GetCenter and parent:GetCenter() or nil
+
+    if buttonCenterX and parentCenterX and buttonCenterX > parentCenterX then
+        text:SetPoint("RIGHT", button, "LEFT", -2, 0)
+        return
+    end
+
+    text:SetPoint("LEFT", button, "RIGHT", 2, 0)
+end
+
+local function UpdateMissingEnchantOverlay(button, slotID, itemLink, itemID)
+    local text = GetOrCreateMissingEnchantText(button)
+    if not text then
+        return
+    end
+
+    if itemLink and IsMidnightEnchantableSlot(slotID, itemLink, itemID) and not GetPermanentEnchantId(itemLink) then
+        PositionMissingEnchantText(button, text)
+        text:SetText("Unenchanted")
+        text:SetTextColor(1, 0.2, 0.2)
+        text:Show()
+    else
+        HideTextOverlay(text)
+    end
+end
+
 local function UpdateItemLevelOverlay(button, itemLevel, fontSize, yOffset, quality)
     local text = GetOrCreateItemLevelText(button, fontSize, yOffset)
     local background = GetOrCreateOverlayBackground(button, "AngusUIItemLevelBackground")
@@ -537,6 +703,23 @@ local function UpdateBindOverlay(button, label, r, g, b)
     end
 end
 
+local function UpdateJunkOverlay(button, isJunk)
+    local icon = GetButtonIcon(button)
+    if icon and icon.SetDesaturated then
+        icon:SetDesaturated(isJunk == true)
+        if isJunk then
+            icon:SetVertexColor(0.75, 0.75, 0.75)
+        else
+            icon:SetVertexColor(1, 1, 1)
+        end
+    end
+
+    local junkIcon = GetOrCreateJunkIcon(button)
+    if junkIcon then
+        junkIcon:SetShown(isJunk == true)
+    end
+end
+
 local function UpdateContainerButton(button, containerID, slotID)
     HideButtonOverlays(button)
 
@@ -559,6 +742,7 @@ local function UpdateContainerButton(button, containerID, slotID)
 
         local label, r, g, b = GetContainerBindData(containerID, slotID)
         UpdateBindOverlay(button, label, r, g, b)
+        UpdateJunkOverlay(button, IsJunkContainerItem(containerID, slotID))
     end)
 end
 
@@ -580,7 +764,9 @@ local function UpdateCharacterItemButton(button)
     end
 
     item:ContinueOnItemLoad(function()
+        local itemLink = item:GetItemLink() or GetInventoryItemLink("player", slotID)
         UpdateItemLevelOverlay(button, GetItemLevelFromItem(item), 11, 2, item:GetItemQuality())
+        UpdateMissingEnchantOverlay(button, slotID, itemLink, item:GetItemID())
     end)
 end
 

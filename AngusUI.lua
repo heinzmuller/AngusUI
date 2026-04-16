@@ -6,6 +6,7 @@ frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("LOADING_SCREEN_DISABLED")
 frame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 frame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+frame:RegisterEvent("UNIT_INVENTORY_CHANGED")
 frame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 frame:RegisterEvent("BAG_UPDATE_DELAYED")
 frame:RegisterEvent("MYTHIC_PLUS_CURRENT_AFFIX_UPDATE")
@@ -238,7 +239,12 @@ frame:SetScript(
             AngusUI:TalentRecommendationsRefresh()
         end
 
-        if (event == "PLAYER_EQUIPMENT_CHANGED") or (event == "GET_ITEM_INFO_RECEIVED") or (event == "BAG_UPDATE_DELAYED") then
+        if
+            (event == "PLAYER_EQUIPMENT_CHANGED") or
+            ((event == "UNIT_INVENTORY_CHANGED") and (...) == "player") or
+            (event == "GET_ITEM_INFO_RECEIVED") or
+            (event == "BAG_UPDATE_DELAYED")
+        then
             AngusUI:RefreshCharacterPanel()
         end
 
