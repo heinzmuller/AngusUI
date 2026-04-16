@@ -3,6 +3,7 @@ local _, AngusUI = ...
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+frame:RegisterEvent("LOADING_SCREEN_DISABLED")
 frame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 frame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
 frame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
@@ -58,6 +59,8 @@ local function SlashCommand(command)
         back = function() AngusUI:TeleportBack() end,
         rep = function() AngusUI:Reputations() end,
         crests = function() AngusUI:Crests() end,
+        treasuredebug = function() AngusUI:ToggleTreasureDebug() end,
+        treasuredump = function() AngusUI:DumpTreasureDebug() end,
         ui = function() AngusUI:UI() end,
         toast = function() AngusUI:ShowChoresToast(true) end,
     }
@@ -92,8 +95,16 @@ function frame:ADDON_LOADED(self, addon)
             AngusUI:ChoresInit()
         end
 
+        if AngusUI.DelvesInit then
+            AngusUI:DelvesInit()
+        end
+
         if AngusUI.SyncInit then
             AngusUI:SyncInit()
+        end
+
+        if AngusUI.TreasuresInit then
+            AngusUI:TreasuresInit()
         end
     end
 
@@ -116,6 +127,12 @@ function frame:ADDON_LOADED(self, addon)
         AngusUI:TalentRecommendations()
     end
 
+    if (addon == "Blizzard_ProfessionsTemplates") or (addon == "Blizzard_Professions") then
+        if AngusUI.ProfessionLinksInit then
+            AngusUI:ProfessionLinksInit()
+        end
+    end
+
     if (addon == "Blizzard_UnitFrame") then
         AngusUI:PartyFrames()
     end
@@ -129,19 +146,37 @@ frame:SetScript(
         end
 
         if (event == "PLAYER_ENTERING_WORLD") then
+            local initialLogin, isReloadingUI = ...
             AngusUI:EnableActionRangeOverlay()
             AngusUI:ApplyTheme()
             AngusUI:FriendsFrame()
             AngusUI:RefreshCharacterPanel()
             AngusUI:TalentRecommendations()
             AngusUI:PartyFrames()
+            if AngusUI.ProfessionLinksInit then
+                AngusUI:ProfessionLinksInit()
+            end
             if AngusUI.SyncRefresh then
                 AngusUI:SyncRefresh()
             end
             if AngusUI.QueueSyncGildedRefresh then
                 AngusUI:QueueSyncGildedRefresh()
             end
-            AngusUI:ShowChoresToast()
+
+            if initialLogin or isReloadingUI then
+                AngusUI.choresInitialToastPending = true
+            end
+        end
+
+        if (event == "LOADING_SCREEN_DISABLED") then
+            if AngusUI.choresInitialToastPending then
+                AngusUI.choresInitialToastPending = false
+                if AngusUI.ShowInitialChoresToast then
+                    AngusUI:ShowInitialChoresToast()
+                else
+                    AngusUI:ShowChoresToast()
+                end
+            end
         end
 
         if (event == "CURRENCY_DISPLAY_UPDATE") then
@@ -168,6 +203,7 @@ frame:SetScript(
                 interactionType == Enum.PlayerInteractionType.Banker or
                 interactionType == Enum.PlayerInteractionType.AccountBanker
             then
+                AngusUI:RefreshCharacterPanel()
                 if AngusUI.SyncRefresh then
                     AngusUI:SyncRefresh()
                 end

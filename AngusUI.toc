@@ -9,10 +9,9 @@
 AngusUI.lua
 ActionRangeOverlay.lua
 Screenshots.lua
-InventoryOverlays.lua
-Bank.lua
-CharacterPanel.lua
+ItemOverlays.lua
 Chores.lua
+Delves.lua
 GreatVault.lua
 Sync.lua
 Crests.lua
@@ -22,7 +21,9 @@ Reputations.lua
 PartyFrames.lua
 Settings.lua
 TalentRecommendations.lua
+ProfessionLinks.lua
 Theme.lua
 TeleportBack.lua
+Treasures.lua
 UI.lua
 WorldQuestIcons.lua

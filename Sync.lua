@@ -1040,7 +1040,21 @@ end
 
 function AngusUI:SyncRefresh(includeProfessionConcentration)
     self:UpdateSyncAccountData()
+    local previousCompletionSnapshot = nil
+    local characterData = self.GetSyncCharacterData and self:GetSyncCharacterData() or nil
+
+    if characterData and self.BuildChoresCompletionSnapshot then
+        previousCompletionSnapshot = self:BuildChoresCompletionSnapshot(characterData)
+    end
+
     self:UpdateSyncCharacterData(includeProfessionConcentration == true)
+
+    if characterData and previousCompletionSnapshot and self.BuildChoresCompletionSnapshot and self.DidAnyChoreComplete then
+        local currentCompletionSnapshot = self:BuildChoresCompletionSnapshot(characterData)
+        if self.choresToastShown and self:DidAnyChoreComplete(previousCompletionSnapshot, currentCompletionSnapshot) then
+            self:ShowCompletedChoreToast()
+        end
+    end
 
     if self.RefreshChoresToast then
         self:RefreshChoresToast()

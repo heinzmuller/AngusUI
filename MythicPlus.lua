@@ -14,6 +14,10 @@ local function mythic(itemLevel)
     return ITEM_LEGENDARY_COLOR:WrapTextInColorCode(itemLevel)
 end
 
+local function cell(value)
+    return string.format("%-4s", tostring(value))
+end
+
 function AngusUI:MythicPlus()
     local frame = CreateFrame("Frame", "AngusUIMythicPlusRewards", ChallengesFrame.WeeklyInfo)
     frame:SetSize(1, 1)
@@ -24,65 +28,57 @@ function AngusUI:MythicPlus()
     text:SetPoint("TOPRIGHT", frame, "TOPRIGHT")
 
     local endOfDungeon = {
-        champion(250),
-        champion(250),
-        champion(253),
-        champion(256),
-        hero(259),
-        hero(259),
-        hero(263),
-        hero(263),
-        hero(266),
-        hero(266),
-        hero(266),
+        champion(cell(250)),
+        champion(cell(250)),
+        champion(cell(253)),
+        champion(cell(256)),
+        hero(cell(259)),
+        hero(cell(259)),
+        hero(cell(263)),
+        hero(cell(263)),
+        hero(cell(266)),
     }
 
     local vault = {
-        hero(259),
-        hero(259),
-        hero(263),
-        hero(263),
-        hero(266),
-        hero(269),
-        hero(269),
-        hero(269),
-        mythic(272),
-        mythic(272),
-        mythic(272),
+        hero(cell(259)),
+        hero(cell(259)),
+        hero(cell(263)),
+        hero(cell(263)),
+        hero(cell(266)),
+        hero(cell(269)),
+        hero(cell(269)),
+        hero(cell(269)),
+        mythic(cell(272)),
     }
 
     local crests = {
-        hero(10),
-        hero(12),
-        hero(14),
-        hero(16),
-        hero(18),
-        mythic(10),
-        mythic(12),
-        mythic(14),
-        mythic(16),
-        mythic(18),
-        mythic(20),
+        champion(cell(10)),
+        champion(cell(12)),
+        hero(cell(10)),
+        hero(cell(10)),
+        hero(cell(12)),
+        hero(cell(14)),
+        hero(cell(18)),
+        mythic(cell(10)),
+        mythic(cell("12+")),
     }
 
     local mythicItemLevels = ""
-    mythicItemLevels = mythicItemLevels .. "2    3    4    5    6    7    8    9   10   11   12\n"
+    mythicItemLevels = mythicItemLevels .. table.concat({
+        cell(2),
+        cell(3),
+        cell(4),
+        cell(5),
+        cell(6),
+        cell(7),
+        cell(8),
+        cell(9),
+        cell("10+"),
+    }) .. "\n"
 
-    for _, v in ipairs(endOfDungeon) do
-        mythicItemLevels = mythicItemLevels .. v .. "  "
-    end
-
-    mythicItemLevels = mythicItemLevels .. "\n"
-
-    for _, v in ipairs(vault) do
-        mythicItemLevels = mythicItemLevels .. v .. "  "
-    end
-
-    mythicItemLevels = mythicItemLevels .. "\n"
-
-    for _, v in ipairs(crests) do
-        mythicItemLevels = mythicItemLevels .. v .. "   "
-    end
+    mythicItemLevels = mythicItemLevels .. table.concat(endOfDungeon) .. "\n"
+    mythicItemLevels = mythicItemLevels .. table.concat(vault) .. "\n"
+    mythicItemLevels = mythicItemLevels .. table.concat(crests)
 
     text:SetText(mythicItemLevels)
     frame:Show()
