@@ -147,9 +147,9 @@ local function PrepareCharacterItemLevelText(button)
 end
 
 local function GetCharacterQualityColor(quality)
-    local color = quality and C_Item and C_Item.GetItemQualityColor and C_Item.GetItemQualityColor(quality)
-    if color then
-        return color.r or 1, color.g or 1, color.b or 1
+    local r, g, b = quality and C_Item and C_Item.GetItemQualityColor and C_Item.GetItemQualityColor(quality)
+    if r and g and b then
+        return r, g, b
     end
 
     local itemQualityColor = quality and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality]
