@@ -10,6 +10,7 @@ AngusUI.lua
 ActionRangeOverlay.lua
 Screenshots.lua
 ItemOverlays.lua
+Character.lua
 Chores.lua
 Delves.lua
 GreatVault.lua

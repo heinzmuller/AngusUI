@@ -115,6 +115,9 @@ function frame:ADDON_LOADED(self, addon)
     end
 
     if (addon == "Blizzard_CharacterUI") then
+        if AngusUI.CharacterInit then
+            AngusUI:CharacterInit()
+        end
         AngusUI:RefreshCharacterPanel()
     end
 
@@ -151,6 +154,9 @@ frame:SetScript(
             AngusUI:EnableActionRangeOverlay()
             AngusUI:ApplyTheme()
             AngusUI:FriendsFrame()
+            if AngusUI.CharacterInit then
+                AngusUI:CharacterInit()
+            end
             AngusUI:RefreshCharacterPanel()
             AngusUI:TalentRecommendations()
             AngusUI:PartyFrames()
