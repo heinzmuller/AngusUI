@@ -88,6 +88,10 @@ function frame:ADDON_LOADED(self, addon)
             AngusUI:BankInit()
         end
 
+        if AngusUI.MailInit then
+            AngusUI:MailInit()
+        end
+
         if AngusUI.SettingsInit then
             AngusUI:SettingsInit()
         end
@@ -132,6 +136,10 @@ function frame:ADDON_LOADED(self, addon)
 
         if AngusUI.BankInit then
             AngusUI:BankInit()
+        end
+
+        if AngusUI.MailInit then
+            AngusUI:MailInit()
         end
     end
 
