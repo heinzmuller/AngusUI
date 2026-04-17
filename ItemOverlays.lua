@@ -705,19 +705,17 @@ local function HookBagFrames()
         return
     end
 
-    local frames = { ContainerFrameCombinedBags }
-
-    for index = 1, NUM_CONTAINER_FRAMES or 6 do
-        frames[#frames + 1] = _G["ContainerFrame" .. index]
+    if ContainerFrameCombinedBags and ContainerFrameCombinedBags.UpdateItems and not hookedRefreshFrames[ContainerFrameCombinedBags] then
+        hooksecurefunc(ContainerFrameCombinedBags, "UpdateItems", RefreshBagFrameItemLevels)
+        hookedRefreshFrames[ContainerFrameCombinedBags] = true
     end
 
-    if ContainerFrameContainer and ContainerFrameContainer.ContainerFrames then
-        for _, frame in ipairs(ContainerFrameContainer.ContainerFrames) do
-            frames[#frames + 1] = frame
-        end
+    local containerFrames = (ContainerFrameContainer or UIParent).ContainerFrames
+    if not containerFrames then
+        return
     end
 
-    for _, frame in ipairs(frames) do
+    for _, frame in ipairs(containerFrames) do
         if frame and frame.UpdateItems and not hookedRefreshFrames[frame] then
             hooksecurefunc(frame, "UpdateItems", RefreshBagFrameItemLevels)
             hookedRefreshFrames[frame] = true
@@ -774,7 +772,6 @@ function AngusUI:BankInit()
     local depositWarboundButton = EnsureDepositWarboundButton()
 
     BankFrame:HookScript("OnShow", function(bankFrame)
-        AngusUI:ItemOverlays()
         RefreshDepositWarboundButton(depositWarboundButton)
     end)
 

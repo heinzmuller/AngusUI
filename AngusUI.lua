@@ -80,6 +80,10 @@ SlashCmdList.ANGUSUI = SlashCommand
 SLASH_ANGUSUI1, SLASH_ANGUSUI2 = "/angusui", "/aui"
 function frame:ADDON_LOADED(self, addon)
     if (addon == "AngusUI") then
+        if AngusUI.ItemOverlays then
+            AngusUI:ItemOverlays()
+        end
+
         if AngusUI.BankInit then
             AngusUI:BankInit()
         end
@@ -122,13 +126,17 @@ function frame:ADDON_LOADED(self, addon)
     end
 
     if (addon == "Blizzard_UIPanels_Game") then
+        if AngusUI.ItemOverlays then
+            AngusUI:ItemOverlays()
+        end
+
         if AngusUI.BankInit then
             AngusUI:BankInit()
         end
     end
 
     if (addon == "Blizzard_PlayerSpells") then
-        AngusUI:TalentRecommendations()
+        AngusUI:TalentRecommendationsRefresh()
     end
 
     if (addon == "Blizzard_ProfessionsTemplates") or (addon == "Blizzard_Professions") then
@@ -158,7 +166,7 @@ frame:SetScript(
                 AngusUI:CharacterInit()
             end
             AngusUI:RefreshCharacterPanel()
-            AngusUI:TalentRecommendations()
+            AngusUI:TalentRecommendationsRefresh()
             AngusUI:PartyFrames()
             if AngusUI.ProfessionLinksInit then
                 AngusUI:ProfessionLinksInit()
@@ -241,7 +249,6 @@ frame:SetScript(
 
         if (event == "PLAYER_SPECIALIZATION_CHANGED") or (event == "PLAYER_ENTERING_WORLD") then
             AngusUI:UI()
-            AngusUI:TalentRecommendations()
             AngusUI:TalentRecommendationsRefresh()
         end
 
