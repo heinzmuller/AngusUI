@@ -1,5 +1,7 @@
 local _, AngusUI = ...
 
+-- Keep SYNC.md updated whenever the sync payload in this file changes.
+
 local gildedStashWidgetID = 7591
 local gildedStashCurrencyID = 3290
 local cofferKeyShardsCurrencyID = 3310
@@ -12,6 +14,8 @@ local firstWorldBossQuestIDs = {
     92636, -- Predaxas
 }
 local nightmareTaskQuestID = 94446
+local nullingNulleusQuestID = 93525
+local seasonalTierSetAchievementID = 61519
 local trovehunterBountyAuraSpellID = 1254631
 local trackedCurrencyIDs = {
     3383,
@@ -126,6 +130,14 @@ local function CountCompletedQuests(questIDs)
     end
 
     return count
+end
+
+local function IsAchievementComplete(achievementID)
+    if not achievementID or achievementID <= 0 or not GetAchievementInfo then
+        return false
+    end
+
+    return select(14, GetAchievementInfo(achievementID)) == true
 end
 
 local function IsProfessionLearned(spellID)
@@ -551,6 +563,9 @@ function AngusUI:GetSyncCharacterData()
     characterData.greatVault = characterData.greatVault or {}
     characterData.currencies = characterData.currencies or {}
     characterData.gold = characterData.gold or 0
+    characterData.seasonal = characterData.seasonal or {}
+    characterData.seasonal.quests = characterData.seasonal.quests or {}
+    characterData.seasonal.achievements = characterData.seasonal.achievements or {}
     characterData.weeklies = characterData.weeklies or {}
 
     return characterData
@@ -712,6 +727,28 @@ function AngusUI:UpdateSyncCharacterPreyData(characterData)
     end
 
     characterData.prey = preyData
+    return true
+end
+
+function AngusUI:UpdateSyncCharacterSeasonalData(characterData)
+    local seasonalData = {
+        quests = {},
+        achievements = {},
+    }
+
+    if IsQuestComplete(nullingNulleusQuestID) then
+        table.insert(seasonalData.quests, nullingNulleusQuestID)
+    end
+
+    if IsAchievementComplete(seasonalTierSetAchievementID) then
+        table.insert(seasonalData.achievements, seasonalTierSetAchievementID)
+    end
+
+    if AreTablesEqual(characterData.seasonal, seasonalData) then
+        return false
+    end
+
+    characterData.seasonal = seasonalData
     return true
 end
 
@@ -950,10 +987,14 @@ function AngusUI:UpdateSyncCharacterData(includeProfessionConcentration)
     characterData.greatVault = characterData.greatVault or {}
     characterData.currencies = characterData.currencies or {}
     characterData.gold = characterData.gold or 0
+    characterData.seasonal = characterData.seasonal or {}
+    characterData.seasonal.quests = characterData.seasonal.quests or {}
+    characterData.seasonal.achievements = characterData.seasonal.achievements or {}
     characterData.weeklies = characterData.weeklies or {}
 
     changed = self:UpdateSyncCharacterDelvesData(characterData) or changed
     changed = self:UpdateSyncCharacterPreyData(characterData) or changed
+    changed = self:UpdateSyncCharacterSeasonalData(characterData) or changed
     changed = self:UpdateSyncCharacterProfessionsData(characterData) or changed
     changed = self:UpdateSyncCharacterGreatVaultData(characterData) or changed
     changed = self:UpdateSyncCharacterCurrenciesData(characterData) or changed
