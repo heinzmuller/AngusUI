@@ -641,10 +641,17 @@ function AngusUI:GetProfessionConcentrationSnapshot(knownProfessions)
         return nil
     end
 
+    self:Print(
+        "Concentration snapshot debug:",
+        resolvedProfessionName,
+        "rechargingCycleDurationMS=",
+        currencyInfo.rechargingCycleDurationMS
+    )
+
     return {
         [resolvedProfessionName] = {
             current = currencyInfo.quantity or 0,
-            timestamp = time(),
+            timestamp = GetServerTime(),
         },
     }
 end
