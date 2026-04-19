@@ -123,6 +123,10 @@ function frame:ADDON_LOADED(self, addon)
     end
 
     if (addon == "Blizzard_CharacterUI") then
+        if AngusUI.ItemOverlays then
+            AngusUI:ItemOverlays()
+        end
+
         if AngusUI.CharacterInit then
             AngusUI:CharacterInit()
         end

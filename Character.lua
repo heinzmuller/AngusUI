@@ -88,6 +88,7 @@ local midnightAlwaysEnchantableSlots = {
 
 local midnightWeaponEnchantLocations = {
     INVTYPE_2HWEAPON = true,
+    INVTYPE_HOLDABLE = true,
     INVTYPE_RANGED = true,
     INVTYPE_RANGEDRIGHT = true,
     INVTYPE_WEAPON = true,
@@ -259,6 +260,19 @@ local function GetPermanentEnchantId(itemLink)
     return nil
 end
 
+local function GetLinkValues(link)
+    if type(link) ~= "string" or not LinkUtil or not LinkUtil.ExtractLink then
+        return nil
+    end
+
+    local linkType, linkOptions = LinkUtil.ExtractLink(link)
+    if linkOptions then
+        return linkType, strsplit(":", linkOptions)
+    end
+
+    return linkType
+end
+
 local function HasTooltipLineType(tooltipData, lineType)
     local lines = tooltipData and tooltipData.lines
     if not lines then
@@ -290,7 +304,32 @@ local function HasInventoryPermanentEnhancement(slotID, itemLink)
     return HasTooltipLineType(GetInventoryTooltipData(slotID), TOOLTIP_LINE_ITEM_ENCHANTMENT_PERMANENT)
 end
 
-local function HasEmptyGemSocket(slotID)
+local function HasEmptyGemSocket(slotID, itemLink)
+    if type(itemLink) == "string" then
+        local getItemStats = C_Item and C_Item.GetItemStats or GetItemStats
+        local stats = getItemStats and getItemStats(itemLink)
+        if stats then
+            local sockets = 0
+            for label in pairs(stats) do
+                if type(label) == "string" and label:match("EMPTY_SOCKET_") then
+                    sockets = sockets + 1
+                end
+            end
+
+            if sockets == 0 then
+                return false
+            end
+
+            local gem1, gem2, gem3, gem4 = select(4, GetLinkValues(itemLink))
+            local gems = (gem1 ~= "" and gem1 and 1 or 0)
+                + (gem2 ~= "" and gem2 and 1 or 0)
+                + (gem3 ~= "" and gem3 and 1 or 0)
+                + (gem4 ~= "" and gem4 and 1 or 0)
+
+            return sockets > gems
+        end
+    end
+
     return HasTooltipLineType(GetInventoryTooltipData(slotID), TOOLTIP_LINE_GEM_SOCKET)
 end
 
@@ -347,24 +386,30 @@ end
 local function BuildCharacterWarningText(slotID, itemLink, itemID)
     local warnings = {}
     local hasPermanentEnhancement = HasInventoryPermanentEnhancement(slotID, itemLink)
+    local isEnchantable = IsMidnightEnchantableSlot(slotID, itemLink, itemID)
+    local isLegSlot = slotID == INVSLOT_LEGS
 
-    if IsMidnightEnchantableSlot(slotID, itemLink, itemID) and not hasPermanentEnhancement then
+    if isEnchantable and not hasPermanentEnhancement then
         warnings[#warnings + 1] = "Unenchanted"
     end
 
-    if slotID == INVSLOT_LEGS and not hasPermanentEnhancement then
-        warnings[#warnings + 1] = "No Leg Enh."
+    if isLegSlot and not hasPermanentEnhancement and not isEnchantable then
+        warnings[#warnings + 1] = "Unenchanted"
     end
 
-    if HasEmptyGemSocket(slotID) then
-        warnings[#warnings + 1] = "Missing Gem"
+    if HasEmptyGemSocket(slotID, itemLink) then
+        warnings[#warnings + 1] = "Gem"
     end
 
-    if #warnings == 0 then
-        return nil
+    if #warnings > 0 then
+        return table.concat(warnings, "\n"), 1, 0.2, 0.2
     end
 
-    return table.concat(warnings, "\n")
+    if (isEnchantable or isLegSlot) and hasPermanentEnhancement then
+        return "Enchanted", 0.2, 0.9, 0.2
+    end
+
+    return nil
 end
 
 local function UpdateCharacterSlotWarning(button)
@@ -385,7 +430,7 @@ local function UpdateCharacterSlotWarning(button)
     item:ContinueOnItemLoad(function()
         local itemLink = item:GetItemLink() or GetInventoryItemLink("player", slotID)
         UpdateCharacterItemLevel(button, item)
-        local warningText = BuildCharacterWarningText(slotID, itemLink, item:GetItemID())
+        local warningText, warningR, warningG, warningB = BuildCharacterWarningText(slotID, itemLink, item:GetItemID())
         local text = PrepareCharacterWarningText(button)
         if not text then
             return
@@ -394,7 +439,7 @@ local function UpdateCharacterSlotWarning(button)
         if warningText then
             PositionCharacterWarningText(button, text)
             text:SetText(warningText)
-            text:SetTextColor(1, 0.2, 0.2)
+            text:SetTextColor(warningR or 1, warningG or 0.2, warningB or 0.2)
             text:Show()
         else
             HideCharacterWarning(button)

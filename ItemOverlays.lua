@@ -542,11 +542,19 @@ local function GetFlyoutItem(button)
         return nil
     end
 
-    if button.GetItemLocation and Item.CreateFromItemLocation then
-        local itemLocation = button:GetItemLocation()
-        if itemLocation and itemLocation.IsValid and itemLocation:IsValid() then
-            return Item:CreateFromItemLocation(itemLocation)
+    local flyoutFrame = EquipmentFlyoutFrame
+    local flyoutButton = flyoutFrame and flyoutFrame.button or nil
+    local flyoutParent = flyoutButton and flyoutButton.GetParent and flyoutButton:GetParent() or nil
+    local flyoutSettings = flyoutParent and flyoutParent.flyoutSettings or nil
+    if flyoutSettings and flyoutSettings.useItemLocation then
+        if button.GetItemLocation and Item.CreateFromItemLocation then
+            local itemLocation = button:GetItemLocation()
+            if itemLocation then
+                return Item:CreateFromItemLocation(itemLocation)
+            end
         end
+
+        return nil
     end
 
     local location = button.location
@@ -560,15 +568,11 @@ local function GetFlyoutItem(button)
 
     if EquipmentManager_GetLocationData then
         local locationData = EquipmentManager_GetLocationData(location)
-        if not locationData or next(locationData) == nil then
-            return nil
-        end
-
-        if locationData.isBags and Item.CreateFromBagAndSlot then
+        if locationData and locationData.isBags and Item.CreateFromBagAndSlot then
             return Item:CreateFromBagAndSlot(locationData.bag, locationData.slot)
         end
 
-        if locationData.isPlayer and Item.CreateFromEquipmentSlot then
+        if locationData and locationData.isPlayer and Item.CreateFromEquipmentSlot then
             return Item:CreateFromEquipmentSlot(locationData.slot)
         end
     elseif EquipmentManager_UnpackLocation then
@@ -610,19 +614,12 @@ local function RefreshFlyoutItemButton(button)
     end
 
     item:ContinueOnItemLoad(function()
-        local itemLink = item:GetItemLink()
-        local itemID = item:GetItemID()
-        local itemEquipLoc = select(4, C_Item.GetItemInfoInstant(itemLink or itemID))
-        if not IsRelevantEquipLocation(itemEquipLoc) then
-            return
-        end
-
         UpdateItemLevelOverlay(button, GetItemLevelFromItem(item), 10, 1, item:GetItemQuality())
     end)
 end
 
 local function RefreshFlyoutItemLevels()
-    if not EquipmentFlyoutFrame or not EquipmentFlyoutFrame:IsShown() or not EquipmentFlyoutFrame.buttons then
+    if not EquipmentFlyoutFrame or not EquipmentFlyoutFrame.buttons then
         HideFlyoutItemOverlays()
         return
     end
@@ -743,6 +740,11 @@ local function InstallHooks(self)
     if EquipmentFlyout_UpdateItems and not self.itemOverlayFlyoutHooked then
         hooksecurefunc("EquipmentFlyout_UpdateItems", RefreshFlyoutItemLevels)
         self.itemOverlayFlyoutHooked = true
+    end
+
+    if EquipmentFlyout_DisplayButton and not self.itemOverlayFlyoutDisplayHooked then
+        hooksecurefunc("EquipmentFlyout_DisplayButton", RefreshFlyoutItemButton)
+        self.itemOverlayFlyoutDisplayHooked = true
     end
 
     if ContainerFrame_Update and not self.itemOverlayLegacyBagHooked then
