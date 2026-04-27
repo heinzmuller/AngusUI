@@ -25,6 +25,7 @@ local trackedCurrencyIDs = {
     3347,
     3378,
     3212,
+    3418,
     cofferKeyShardsCurrencyID,
     restoredCofferKeyCurrencyID,
 }

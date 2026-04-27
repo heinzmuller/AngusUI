@@ -103,6 +103,7 @@ AngusUIDB = {
                 [3347] = 0,
                 [3378] = 0,
                 [3212] = 0,
+                [3418] = 0,
             },
             warbandBank = {
                 gold = 0,
@@ -173,6 +174,7 @@ AngusUICharacterSyncDB = {
         [3347] = 0,
         [3378] = 0,
         [3212] = 0,
+        [3418] = 0,
         [3310] = 0,
         [3028] = 0,
     },
@@ -197,6 +199,7 @@ AngusUICharacterSyncDB = {
 3347 = Myth Dawncrest
 3378 = Dawnlight Manaflux
 3212 = Radiant Spark Dust
+3418 = Nebulous Voidcores
 3310 = Coffer Key Shards
 3028 = Restored Coffer Key
 ```
@@ -273,6 +276,7 @@ AngusUICharacterSyncDB = {
         [3347] = 0,
         [3378] = 0,
         [3212] = 0,
+        [3418] = 0,
         [3310] = 0,
         [3028] = 0,
     },
@@ -340,6 +344,7 @@ AngusUICharacterSyncDB = {
         [3347] = 2,
         [3378] = 4280,
         [3212] = 24,
+        [3418] = 7,
         [3310] = 360,
         [3028] = 2,
     },
@@ -411,6 +416,7 @@ AngusUICharacterSyncDB = {
         [3347] = 8,
         [3378] = 9420,
         [3212] = 75,
+        [3418] = 16,
         [3310] = 600,
         [3028] = 4,
     },

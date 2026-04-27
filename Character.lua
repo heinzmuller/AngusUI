@@ -342,7 +342,7 @@ local function IsMidnightEnchantableSlot(slotID, itemLink, itemID)
         return true
     end
 
-    if slotID ~= INVSLOT_MAINHAND and slotID ~= INVSLOT_SECONDARYHAND then
+    if slotID ~= INVSLOT_MAINHAND and slotID ~= INVSLOT_OFFHAND then
         return false
     end
 
@@ -363,7 +363,7 @@ local function PositionCharacterWarningText(button, text)
         return
     end
 
-    if button.GetID and button:GetID() == INVSLOT_SECONDARYHAND then
+    if button.GetID and button:GetID() == INVSLOT_OFFHAND then
         text:SetJustifyH("LEFT")
         text:SetPoint("BOTTOMLEFT", button, "TOPLEFT", 0, 2)
         return
