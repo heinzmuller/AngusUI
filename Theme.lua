@@ -1,3 +1,4 @@
+-- Applies AngusUI's visual theme so Blizzard UI art matches the addon's preferred look.
 local _, AngusUI = ...
 
 local defaultThemeEnabled = true
@@ -10,6 +11,7 @@ themeWatcher:SetScript("OnEvent", function()
     AngusUI:ApplyTheme()
 end)
 
+-- Applies or resets AngusUI's custom tinting across supported default UI art.
 function AngusUI:Theme(forceReset)
     local enabled = defaultThemeEnabled
     local darkness = defaultThemeDarkness
@@ -98,6 +100,7 @@ function AngusUI:Theme(forceReset)
     end
 end
 
+-- Applies the current theme state safely, including restoring art when disabled.
 function AngusUI:ApplyTheme()
     if not self.Theme then
         return

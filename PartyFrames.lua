@@ -1,3 +1,4 @@
+-- Keeps party frame labels aligned with AngusUI's cleaner group-frame presentation preferences.
 local _, AngusUI = ...
 
 local defaultPartyLabelText
@@ -9,19 +10,23 @@ partyFramesWatcher:SetScript("OnEvent", function()
     AngusUI:PartyFrames()
 end)
 
+-- Centralizes whether party frame labels should be hidden.
 local function ShouldHidePartyLabel()
     local settingsDB = AngusUI.GetSettingsDB and AngusUI:GetSettingsDB() or nil
     return settingsDB == nil or settingsDB.hidePartyLabel ~= false
 end
 
+-- Returns the correct standard party label text for the current setting.
 local function GetPartyLabelText()
     return ShouldHidePartyLabel() and "" or defaultPartyLabelText
 end
 
+-- Returns the correct compact party title text for the current setting.
 local function GetCompactPartyTitleText()
     return ShouldHidePartyLabel() and "" or defaultCompactPartyTitleText
 end
 
+-- Applies the desired visible state to a party-frame label widget.
 local function ApplySelectionLabel(label, text)
     if not label then
         return
@@ -36,6 +41,7 @@ local function ApplySelectionLabel(label, text)
     end
 end
 
+-- Updates the standard party frame label to match addon settings.
 local function ApplyPartyFrameLabel()
     if not PartyFrame then
         return
@@ -58,6 +64,7 @@ local function ApplyPartyFrameLabel()
     ApplySelectionLabel(PartyFrame.Selection.VerticalLabel, labelText)
 end
 
+-- Updates the compact party frame title to match addon settings.
 local function ApplyCompactPartyLabel()
     if not CompactPartyFrame then
         return
@@ -84,6 +91,7 @@ local function ApplyCompactPartyLabel()
     end
 end
 
+-- Keeps party frame labels synchronized whenever Blizzard refreshes them.
 function AngusUI:PartyFrames()
     ApplyPartyFrameLabel()
     ApplyCompactPartyLabel()

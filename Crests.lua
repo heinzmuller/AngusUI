@@ -1,3 +1,4 @@
+-- Helps plan crest upgrades so the player can reach the next gear milestone with less guesswork.
 local _, AngusUI = ...
 
 local achievements = {
@@ -53,6 +54,7 @@ local redundancySlots = {
     Offhand = 16,
 }
 
+-- Estimates crest cost to raise an item to a target item level.
 local function calculateCrestCosts(currentItemLevel, targetItemLevel, discountItemLevel)
     local costs = {}
     local total = 0
@@ -73,12 +75,14 @@ local function calculateCrestCosts(currentItemLevel, targetItemLevel, discountIt
     return costs, total
 end
 
+-- Combines crest costs from multiple upgrade requirements.
 local function mergeCrestCosts(target, source)
     for crestName, amount in next, source do
         target[crestName] = (target[crestName] or 0) + amount
     end
 end
 
+-- Turns crest totals into readable output text.
 local function formatCrestCosts(costs, total)
     local parts = {}
 
@@ -97,11 +101,13 @@ local function formatCrestCosts(costs, total)
     return table.concat(parts, ", ") .. " (total " .. total .. ")"
 end
 
+-- Visually marks output as completed or incomplete.
 local function colorizeCompletion(name, completed)
     local color = completed and COMPLETED_COLOR or INCOMPLETE_COLOR
     return color .. name .. COLOR_RESET
 end
 
+-- Prints tracked quest completion alongside crest milestones.
 local function printTrackedQuests()
     for _, quest in ipairs(trackedQuests) do
         local completed = C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted and C_QuestLog.IsQuestFlaggedCompleted(quest.id) or false
@@ -111,6 +117,7 @@ local function printTrackedQuests()
     end
 end
 
+-- Reports the next crest milestone and the cheapest upgrade path to reach it.
 function AngusUI:Crests()
     local achievementState = {}
     local highestAccountAchievementDisplay = 0

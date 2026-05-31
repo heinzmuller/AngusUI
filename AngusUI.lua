@@ -1,3 +1,4 @@
+-- Adds quality of life features to WoW.
 local _, AngusUI = ...
 
 local frame = CreateFrame("Frame")
@@ -6,6 +7,7 @@ frame:RegisterEvent("ADDON_LOADED")
 local ADDON_NAME = "|cff0f7a0fAngus|cff7be426UI|r"
 local PRINT_PREFIX = "|cff000000[|r" .. ADDON_NAME .. "|cff000000]|r"
 
+-- Prints addon messages with a consistent AngusUI prefix.
 function AngusUI:Print(...)
     if select("#", ...) == 0 then
         print(PRINT_PREFIX)
@@ -15,15 +17,13 @@ function AngusUI:Print(...)
     print(PRINT_PREFIX .. " |cffffffff" .. strjoin(" ", tostringall(...)) .. "|r")
 end
 
+-- Routes slash commands to addon features or shows available commands.
 local function SlashCommand(command)
     command = command and strlower(strtrim(command)) or ""
 
     local commands = {
         back = function() AngusUI:TeleportBack() end,
-        rep = function() AngusUI:Reputations() end,
         crests = function() AngusUI:Crests() end,
-        treasuredebug = function() AngusUI:ToggleTreasureDebug() end,
-        treasuredump = function() AngusUI:DumpTreasureDebug() end,
         ui = function() AngusUI:UI() end,
         toast = function() AngusUI:ShowChoresToast(true) end,
     }
@@ -40,6 +40,7 @@ end
 
 SlashCmdList.ANGUSUI = SlashCommand
 SLASH_ANGUSUI1, SLASH_ANGUSUI2 = "/angusui", "/aui"
+-- Initializes AngusUI features when the addon or Blizzard UI modules load.
 function frame:ADDON_LOADED(self, addon)
     if (addon == "AngusUI") then
         if AngusUI.ItemOverlays then
@@ -58,10 +59,6 @@ function frame:ADDON_LOADED(self, addon)
             AngusUI:SettingsInit()
         end
 
-        if AngusUI.GreatVaultInit then
-            AngusUI:GreatVaultInit()
-        end
-
         if AngusUI.ChoresInit then
             AngusUI:ChoresInit()
         end
@@ -74,9 +71,6 @@ function frame:ADDON_LOADED(self, addon)
             AngusUI:SyncInit()
         end
 
-        if AngusUI.TreasuresInit then
-            AngusUI:TreasuresInit()
-        end
     end
 
     if (addon == "Blizzard_TimeManager") then

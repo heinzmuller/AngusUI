@@ -1,3 +1,4 @@
+-- Resizes the Friends window so it better fits the player's preferred amount of social information.
 local _, AngusUI = ...
 
 local baseSizes = nil
@@ -8,6 +9,7 @@ friendsFrameWatcher:SetScript("OnEvent", function()
     AngusUI:FriendsFrame()
 end)
 
+-- Expands the Friends window using the user's saved size preferences.
 function AngusUI:FriendsFrame()
     local settingsDB = self.GetSettingsDB and self:GetSettingsDB() or nil
     if not FriendsFrame or not FriendsListFrame or not settingsDB then

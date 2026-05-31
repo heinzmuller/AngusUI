@@ -1,3 +1,4 @@
+-- Adds recipe search links so profession materials can be researched quickly outside the game.
 local _, AngusUI = ...
 
 local undermineSearchURL = "https://undermine.exchange/#%s-%s/search/%s"
@@ -13,6 +14,7 @@ local recipePrefixesByProfession = {
     [Enum.Profession.Tailoring] = "Pattern: ",
 }
 
+-- Makes recipe text safe to include in a search URL.
 local function UrlEncode(text)
     if type(text) ~= "string" or text == "" then
         return nil
@@ -23,6 +25,7 @@ local function UrlEncode(text)
     end))
 end
 
+-- Derives the current region value for Undermine Exchange links.
 local function GetRegionSlug()
     local regionName = GetCurrentRegionName and GetCurrentRegionName() or nil
     if type(regionName) ~= "string" or regionName == "" then
@@ -32,6 +35,7 @@ local function GetRegionSlug()
     return strlower(regionName)
 end
 
+-- Derives the current realm value for Undermine Exchange links.
 local function GetRealmSlug()
     local realmName = GetNormalizedRealmName and GetNormalizedRealmName() or nil
     if type(realmName) ~= "string" or realmName == "" then
@@ -47,6 +51,7 @@ local function GetRealmSlug()
     return strlower(realmName)
 end
 
+-- Turns a recipe into a market-search-friendly query.
 local function BuildRecipeSearchText(recipeInfo)
     if not recipeInfo or type(recipeInfo.name) ~= "string" or recipeInfo.name == "" then
         return nil
@@ -61,6 +66,7 @@ local function BuildRecipeSearchText(recipeInfo)
     return recipeInfo.name
 end
 
+-- Builds an Undermine Exchange search URL for the current recipe.
 local function BuildUndermineSearchURL(recipeInfo)
     local searchText = BuildRecipeSearchText(recipeInfo)
     local encodedRecipeName = UrlEncode(searchText)
@@ -73,6 +79,7 @@ local function BuildUndermineSearchURL(recipeInfo)
     return string.format(undermineSearchURL, regionSlug, realmSlug, encodedRecipeName)
 end
 
+-- Shows a copy-friendly popup for the generated search URL.
 local function ShowCopyDialog(dialog, title, url)
     if not dialog or type(url) ~= "string" or url == "" then
         return
@@ -86,6 +93,7 @@ local function ShowCopyDialog(dialog, title, url)
     dialog.urlBox:HighlightText()
 end
 
+-- Creates the reusable popup used to copy recipe URLs.
 local function CreateCopyDialog(parent)
     local dialog = CreateFrame("Frame", "AngusUIProfessionRecipeURLDialog", parent, "BasicFrameTemplateWithInset")
     dialog:SetSize(560, 120)
@@ -135,6 +143,7 @@ local function CreateCopyDialog(parent)
     return dialog
 end
 
+-- Creates or reuses the profession UI button for copying the search URL.
 local function EnsureCopyButton(schematicForm)
     if schematicForm.angusRecipeSearchButton then
         return schematicForm.angusRecipeSearchButton
@@ -166,6 +175,7 @@ local function EnsureCopyButton(schematicForm)
     return button
 end
 
+-- Shows the copy button only when a useful recipe link exists.
 local function RefreshCopyButton(schematicForm, recipeInfo, isRecraftOverride)
     if not schematicForm or not schematicForm.RecipeSourceButton then
         return
@@ -194,6 +204,7 @@ local function RefreshCopyButton(schematicForm, recipeInfo, isRecraftOverride)
     button:Show()
 end
 
+-- Initializes profession UI enhancements for recipe search links.
 function AngusUI:ProfessionLinksInit()
     if self.professionLinksInitialized or not ProfessionsRecipeSchematicFormMixin then
         return

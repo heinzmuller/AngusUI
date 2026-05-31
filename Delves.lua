@@ -1,3 +1,4 @@
+-- Warns the player about missing delve entry requirements so bountiful runs are not wasted.
 local _, AngusUI = ...
 
 local cofferKeyShardsCurrencyID = 3310
@@ -10,6 +11,7 @@ local toastHeight = 80
 local toastPadding = 16
 local entryRefreshWindowSeconds = 5
 
+-- Applies tooltip-style visuals to the delve warning toast.
 local function EnsureBackdrop(frame)
     if frame.backdrop then
         return
@@ -32,6 +34,7 @@ local function EnsureBackdrop(frame)
     frame.backdrop = backdrop
 end
 
+-- Safely fetches currency data used for key checks.
 local function GetCurrencyInfoByID(currencyID)
     if not C_CurrencyInfo or not C_CurrencyInfo.GetCurrencyInfo then
         return nil
@@ -40,15 +43,18 @@ local function GetCurrencyInfoByID(currencyID)
     return C_CurrencyInfo.GetCurrencyInfo(currencyID)
 end
 
+-- Reads a currency total for delve requirement checks.
 local function GetCurrencyQuantity(currencyID)
     local currencyInfo = GetCurrencyInfoByID(currencyID)
     return currencyInfo and currencyInfo.quantity or 0
 end
 
+-- Checks whether the player can open a bountiful delve.
 local function HasBountifulDelveKeyRequirement()
     return GetCurrencyQuantity(cofferKeyShardsCurrencyID) >= requiredCofferKeyShards or GetCurrencyQuantity(restoredCofferKeyCurrencyID) >= 1
 end
 
+-- Detects whether the player is currently inside a delve.
 local function IsDelveInProgress()
     if C_PartyInfo and C_PartyInfo.IsDelveInProgress then
         return C_PartyInfo.IsDelveInProgress() == true
@@ -61,6 +67,7 @@ local function IsDelveInProgress()
     return false
 end
 
+-- Builds a stable identifier for the current delve entry.
 local function GetCurrentDelveEntryKey()
     local instanceName, _, _, _, _, _, _, instanceID = GetInstanceInfo()
     if instanceID and instanceID > 0 then
@@ -79,6 +86,7 @@ local function GetCurrentDelveEntryKey()
     return nil
 end
 
+-- Adds a possible delve name for later matching.
 local function AddCandidateName(candidates, name)
     if type(name) ~= "string" or name == "" then
         return
@@ -87,6 +95,7 @@ local function AddCandidateName(candidates, name)
     candidates[name] = true
 end
 
+-- Gathers possible names for the current delve.
 local function GetCurrentDelveNameCandidates()
     local candidates = {}
     AddCandidateName(candidates, GetRealZoneText and GetRealZoneText() or nil)
@@ -94,6 +103,7 @@ local function GetCurrentDelveNameCandidates()
     return candidates
 end
 
+-- Finds the player's current continent map for delve POI lookups.
 local function GetPlayerContinentMapID()
     if not C_Map or not C_Map.GetBestMapForUnit or not C_Map.GetMapInfo then
         return nil
@@ -116,6 +126,7 @@ local function GetPlayerContinentMapID()
     return nil
 end
 
+-- Gathers all related maps under a continent for delve scanning.
 local function CollectMapIDsRecursive(mapID, mapIDs, visited)
     if not mapID or visited[mapID] then
         return
@@ -146,6 +157,7 @@ local function CollectMapIDsRecursive(mapID, mapIDs, visited)
     end
 end
 
+-- Discovers which delves are currently marked bountiful.
 local function GetActiveBountifulDelveNames(self)
     if not C_AreaPoiInfo or not C_AreaPoiInfo.GetDelvesForMap or not C_AreaPoiInfo.GetAreaPOIInfo then
         return nil
@@ -199,6 +211,7 @@ local function GetActiveBountifulDelveNames(self)
     return activeBountifulDelves
 end
 
+-- Decides whether the current delve is one of today's bountiful delves.
 local function GetCurrentDelveBountifulState(self)
     local activeBountifulDelves = GetActiveBountifulDelveNames(self)
     if not activeBountifulDelves then
@@ -219,6 +232,7 @@ local function GetCurrentDelveBountifulState(self)
     return false
 end
 
+-- Lazily builds the missing-key warning toast.
 local function EnsureMissingKeyToast(self)
     if self.delvesMissingKeyToast then
         return self.delvesMissingKeyToast
@@ -251,17 +265,20 @@ local function EnsureMissingKeyToast(self)
     return toast
 end
 
+-- Shows the missing-key warning when entering unprepared.
 function AngusUI:ShowDelvesMissingKeyToast()
     local toast = EnsureMissingKeyToast(self)
     toast:Show()
 end
 
+-- Dismisses the missing-key warning.
 function AngusUI:HideDelvesMissingKeyToast()
     if self.delvesMissingKeyToast then
         self.delvesMissingKeyToast:Hide()
     end
 end
 
+-- Decides whether the current delve entry should trigger a warning.
 function AngusUI:EvaluateDelveEntry()
     if not IsDelveInProgress() then
         self.delvesCurrentEntryKey = nil
@@ -328,6 +345,7 @@ function AngusUI:EvaluateDelveEntry()
     self:ShowDelvesMissingKeyToast()
 end
 
+-- Debounces delve-entry evaluation after changing conditions.
 function AngusUI:QueueDelveEntryCheck(delaySeconds)
     self.delvesCheckRevision = (self.delvesCheckRevision or 0) + 1
     local revision = self.delvesCheckRevision
@@ -341,6 +359,7 @@ function AngusUI:QueueDelveEntryCheck(delaySeconds)
     end)
 end
 
+-- Registers delve watchers and initializes warning state.
 function AngusUI:DelvesInit()
     if self.delvesInitialized then
         return

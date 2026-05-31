@@ -1,9 +1,11 @@
+-- Exports character and account progress to SavedVariables so external tools can show dashboard status.
 local _, AngusUI = ...
 
 -- Keep SYNC.md updated whenever the sync payload in this file changes.
 
 local syncWatcher
 
+-- Detects banker interactions that should trigger a sync refresh.
 local function IsBankerInteraction(interactionType)
     return (
         interactionType == Enum.PlayerInteractionType.Banker or
@@ -11,6 +13,7 @@ local function IsBankerInteraction(interactionType)
     )
 end
 
+-- Routes watched events into the appropriate sync refresh behavior.
 local function HandleSyncRefreshEvent(event, ...)
     if event == "CURRENCY_DISPLAY_UPDATE" then
         AngusUI:SyncHandleCurrencyUpdate(...)
@@ -142,6 +145,7 @@ local normalPreyQuestIDs = {
     91120, 91121, 91122, 91123, 91124,
 }
 
+-- Checks whether a tracked quest-based objective is already done.
 local function IsQuestComplete(questID)
     if not questID or questID <= 0 then
         return false
@@ -150,6 +154,7 @@ local function IsQuestComplete(questID)
     return C_QuestLog.IsQuestFlaggedCompleted(questID) == true
 end
 
+-- Treats any quest in a variant set as completing the objective.
 local function IsAnyQuestComplete(questIDs)
     if not questIDs then
         return false
@@ -164,6 +169,7 @@ local function IsAnyQuestComplete(questIDs)
     return false
 end
 
+-- Counts completed quests within a tracked quest list.
 local function CountCompletedQuests(questIDs)
     local count = 0
 
@@ -176,6 +182,7 @@ local function CountCompletedQuests(questIDs)
     return count
 end
 
+-- Checks whether a tracked achievement-based goal is finished.
 local function IsAchievementComplete(achievementID)
     if not achievementID or achievementID <= 0 or not GetAchievementInfo then
         return false
@@ -184,6 +191,7 @@ local function IsAchievementComplete(achievementID)
     return select(13, GetAchievementInfo(achievementID)) == true
 end
 
+-- Captures the character's current Mythic+ score for sync.
 local function GetOverallMythicPlusScore()
     if C_PlayerInfo and C_PlayerInfo.GetPlayerMythicPlusRatingSummary then
         local summary = C_PlayerInfo.GetPlayerMythicPlusRatingSummary("player")
@@ -199,6 +207,7 @@ local function GetOverallMythicPlusScore()
     return 0
 end
 
+-- Records each dungeon's best completed key level.
 local function BuildMythicPlusBestRuns()
     if not C_MythicPlus or not C_MythicPlus.GetRunHistory then
         return {}
@@ -219,10 +228,12 @@ local function BuildMythicPlusBestRuns()
     return bestRuns
 end
 
+-- Limits profession tracking to professions the character actually knows.
 local function IsProfessionLearned(spellID)
     return C_SpellBook and C_SpellBook.IsSpellKnown and C_SpellBook.IsSpellKnown(spellID) == true
 end
 
+-- Summarizes completion across grouped collectible sources.
 local function CountCompletedSources(sourceList)
     local completed = 0
     local total = 0
@@ -237,6 +248,7 @@ local function CountCompletedSources(sourceList)
     return completed, total
 end
 
+-- Builds a stable identifier for this character's synced data.
 local function GetCharacterStorageKey()
     local name, realm = UnitFullName("player")
     if not name then
@@ -251,10 +263,12 @@ local function GetCharacterStorageKey()
     return name
 end
 
+-- Stamps sync updates with the current date.
 local function GetCurrentDateTag()
     return date("%Y-%m-%d")
 end
 
+-- Captures the character's current gold total.
 local function GetCharacterGold()
     if not GetMoney then
         return 0
@@ -263,6 +277,7 @@ local function GetCharacterGold()
     return GetMoney() or 0
 end
 
+-- Safely fetches currency data for sync snapshots.
 local function GetCurrencyInfoByID(currencyID)
     if not C_CurrencyInfo or not C_CurrencyInfo.GetCurrencyInfo then
         return nil
@@ -271,6 +286,7 @@ local function GetCurrencyInfoByID(currencyID)
     return C_CurrencyInfo.GetCurrencyInfo(currencyID)
 end
 
+-- Decides whether a currency should be tracked account-wide.
 local function IsAccountTransferableCurrency(currencyID)
     if not currencyID then
         return false
@@ -284,6 +300,7 @@ local function IsAccountTransferableCurrency(currencyID)
     return currencyInfo and currencyInfo.isAccountTransferable == true
 end
 
+-- Normalizes container slot data for warband bank snapshots.
 local function GetContainerItemIDAndCount(containerID, slotID)
     if not C_Container or not C_Container.GetContainerItemInfo then
         return nil, 0
@@ -313,6 +330,7 @@ local function GetContainerItemIDAndCount(containerID, slotID)
     return itemID, itemInfo.stackCount or itemInfo.quantity or 0
 end
 
+-- Checks whether the warband bank can be scanned right now.
 local function CanScanWarbandBank()
     if not C_Bank or not Enum or not Enum.BankType or not Enum.BankType.Account then
         return false
@@ -325,6 +343,7 @@ local function CanScanWarbandBank()
     return false
 end
 
+-- Resolves quest IDs into names for tracked weekly quests.
 local function GetQuestName(questID)
     if not questID or not C_QuestLog or not C_QuestLog.GetTitleForQuestID then
         return nil
@@ -333,6 +352,7 @@ local function GetQuestName(questID)
     return C_QuestLog.GetTitleForQuestID(questID)
 end
 
+-- Discovers which tracked weekly quests are currently active.
 local function GetActiveWeeklyQuestMap()
     if not GetNumRandomDungeons or not GetLFGRandomDungeonInfo then
         return {}
@@ -354,6 +374,7 @@ local function GetActiveWeeklyQuestMap()
     return weeklyQuests
 end
 
+-- Keeps only the tracked weekly quests already completed.
 local function BuildCompletedWeeklyQuestList(activeWeeklyQuests)
     local completedWeeklyQuestIDs = {}
 
@@ -368,6 +389,7 @@ local function BuildCompletedWeeklyQuestList(activeWeeklyQuests)
     return completedWeeklyQuestIDs
 end
 
+-- Extracts the reward item level for an unlocked Great Vault slot.
 local function GetGreatVaultItemLevel(activity)
     if not activity or not activity.id or not C_WeeklyRewards or not C_WeeklyRewards.GetExampleRewardItemHyperlinks then
         return nil
@@ -383,6 +405,7 @@ local function GetGreatVaultItemLevel(activity)
         nil
 end
 
+-- Captures unlocked Great Vault rewards for one activity track.
 local function GetGreatVaultTrackData(trackType)
     if not trackType or not C_WeeklyRewards or not C_WeeklyRewards.GetActivities then
         return {}
@@ -404,6 +427,7 @@ local function GetGreatVaultTrackData(trackType)
     return trackData
 end
 
+-- Maps a profession to its concentration currency.
 local function GetProfessionConcentrationCurrencyID(info)
     if not C_TradeSkillUI or not C_TradeSkillUI.GetConcentrationCurrencyID or not info then
         return nil
@@ -427,6 +451,7 @@ local function GetProfessionConcentrationCurrencyID(info)
     return nil
 end
 
+-- Identifies the currently opened profession for concentration tracking.
 local function GetCurrentProfessionConcentrationInfo()
     if not C_TradeSkillUI or not C_TradeSkillUI.GetProfessionChildSkillLineID or not C_TradeSkillUI.GetProfessionInfoBySkillLineID then
         return nil
@@ -446,6 +471,7 @@ local function GetCurrentProfessionConcentrationInfo()
     return professionInfo
 end
 
+-- Gets the concentration currency for the open profession.
 local function GetCurrentProfessionConcentrationCurrencyID()
     local professionInfo = GetCurrentProfessionConcentrationInfo()
     if not professionInfo then
@@ -455,6 +481,7 @@ local function GetCurrentProfessionConcentrationCurrencyID()
     return GetProfessionConcentrationCurrencyID(professionInfo)
 end
 
+-- Normalizes profession names so different API variants can match reliably.
 local function NormalizeProfessionName(name)
     if type(name) ~= "string" then
         return nil
@@ -469,6 +496,7 @@ local function NormalizeProfessionName(name)
     return normalizedName
 end
 
+-- Matches raw profession names to the addon's tracked profession names.
 local function ResolveProfessionSyncName(rawName, knownProfessions)
     if type(rawName) ~= "string" or type(knownProfessions) ~= "table" then
         return nil
@@ -510,6 +538,7 @@ local function ResolveProfessionSyncName(rawName, knownProfessions)
     return bestMatch
 end
 
+-- Builds a quick lookup set of tracked profession names.
 local function BuildProfessionNameLookup(professionDefinitions)
     local professionNames = {}
 
@@ -522,6 +551,7 @@ local function BuildProfessionNameLookup(professionDefinitions)
     return professionNames
 end
 
+-- Captures current skill levels for tracked professions.
 local function GetProfessionSkillSnapshot(knownProfessions)
     if not GetProfessions or not GetProfessionInfo then
         return {}
@@ -546,6 +576,7 @@ local function GetProfessionSkillSnapshot(knownProfessions)
     return professionSkillLevels
 end
 
+-- Detects whether sync data has meaningfully changed before updating it.
 local function AreTablesEqual(left, right)
     if left == right then
         return true
@@ -574,6 +605,7 @@ local function AreTablesEqual(left, right)
     return true
 end
 
+-- Derives a stable key for the current weekly reset period.
 local function GetWeeklyResetKey()
     if not C_DateAndTime or not C_DateAndTime.GetSecondsUntilWeeklyReset then
         return nil
@@ -587,10 +619,12 @@ local function GetWeeklyResetKey()
     return floor((time() + secondsUntilReset) / 3600)
 end
 
+-- Detects whether Trovehunter's Bounty is active.
 local function HasTrovehunterAura()
     return C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID and C_UnitAuras.GetPlayerAuraBySpellID(trovehunterBountyAuraSpellID) ~= nil
 end
 
+-- Reads weekly gilded stash progress from the UI widget.
 local function GetGildedStashCountFromWidget()
     if not C_UIWidgetManager or not C_UIWidgetManager.GetSpellDisplayVisualizationInfo then
         return nil
@@ -610,6 +644,7 @@ local function GetGildedStashCountFromWidget()
     return tonumber(count)
 end
 
+-- Chooses the profession chore definitions for the current expansion.
 function AngusUI:GetCurrentProfessionSyncData()
     local expansionLevel = GetExpansionLevel()
     if professionChoreData[expansionLevel] then
@@ -623,6 +658,7 @@ function AngusUI:GetCurrentProfessionSyncData()
     return professionChoreData[Enum.ExpansionLevel.WarWithin]
 end
 
+-- Initializes and returns the account-wide sync database.
 function AngusUI:GetSyncDB()
     AngusUIDB = AngusUIDB or {}
     AngusUIDB.sync = AngusUIDB.sync or {}
@@ -631,6 +667,7 @@ function AngusUI:GetSyncDB()
     return AngusUIDB.sync
 end
 
+-- Initializes and returns per-character sync storage.
 function AngusUI:GetSyncCharacterData()
     AngusUICharacterSyncDB = AngusUICharacterSyncDB or {}
 
@@ -653,6 +690,7 @@ function AngusUI:GetSyncCharacterData()
     return characterData
 end
 
+-- Initializes and returns account-level sync storage.
 function AngusUI:GetSyncAccountData()
     local syncDB = self:GetSyncDB()
     syncDB.account.firstWorldBoss = syncDB.account.firstWorldBoss == true
@@ -667,6 +705,7 @@ function AngusUI:GetSyncAccountData()
     return syncDB.account
 end
 
+-- Stores this character's completed tracked weekly quests.
 function AngusUI:UpdateSyncCharacterWeekliesData(characterData, accountData)
     local completedWeeklies = BuildCompletedWeeklyQuestList(accountData and accountData.weeklyQuests or nil)
     if AreTablesEqual(characterData.weeklies, completedWeeklies) then
@@ -677,6 +716,7 @@ function AngusUI:UpdateSyncCharacterWeekliesData(characterData, accountData)
     return true
 end
 
+-- Refreshes the account-wide list of active tracked weekly quests.
 function AngusUI:UpdateSyncAccountWeeklyQuestsData(accountData)
     local weeklyQuests = GetActiveWeeklyQuestMap()
     if AreTablesEqual(accountData.weeklyQuests, weeklyQuests) then
@@ -687,6 +727,7 @@ function AngusUI:UpdateSyncAccountWeeklyQuestsData(accountData)
     return true
 end
 
+-- Builds the character's tracked profession chore snapshot.
 function AngusUI:BuildProfessionSyncSnapshot(existingProfessions)
     local professionDefinitions = self:GetCurrentProfessionSyncData()
     local professionSkillLevels = GetProfessionSkillSnapshot(BuildProfessionNameLookup(professionDefinitions))
@@ -721,6 +762,7 @@ function AngusUI:BuildProfessionSyncSnapshot(existingProfessions)
     return professions
 end
 
+-- Captures current concentration for the open profession.
 function AngusUI:GetProfessionConcentrationSnapshot(knownProfessions)
     if not C_TradeSkillUI then
         return nil
@@ -746,6 +788,7 @@ function AngusUI:GetProfessionConcentrationSnapshot(knownProfessions)
     }
 end
 
+-- Updates synced weekly delve progress for the character.
 function AngusUI:UpdateSyncCharacterDelvesData(characterData)
     local existingDelvesData = characterData.delves or {}
     local gildedStashesLooted = GetGildedStashCountFromWidget()
@@ -784,6 +827,7 @@ function AngusUI:UpdateSyncCharacterDelvesData(characterData)
     return true
 end
 
+-- Updates synced prey hunt progress for the character.
 function AngusUI:UpdateSyncCharacterPreyData(characterData)
     local existingPreyData = characterData.prey or {}
     local normal = CountCompletedQuests(normalPreyQuestIDs)
@@ -805,6 +849,7 @@ function AngusUI:UpdateSyncCharacterPreyData(characterData)
     return true
 end
 
+-- Updates synced seasonal milestone progress for the character.
 function AngusUI:UpdateSyncCharacterSeasonalData(characterData)
     local seasonalData = {
         fourSet = IsAchievementComplete(seasonalTierSetAchievementID),
@@ -823,6 +868,7 @@ function AngusUI:UpdateSyncCharacterSeasonalData(characterData)
     return true
 end
 
+-- Refreshes profession sync data without dropping older entries.
 function AngusUI:UpdateSyncCharacterProfessionsData(characterData)
     local existingProfessions = characterData.professions or {}
     local professions = self:BuildProfessionSyncSnapshot(characterData.professions)
@@ -841,6 +887,7 @@ function AngusUI:UpdateSyncCharacterProfessionsData(characterData)
     return true
 end
 
+-- Updates synced Great Vault reward progress.
 function AngusUI:UpdateSyncCharacterGreatVaultData(characterData)
     local greatVaultData = {
         raid = GetGreatVaultTrackData(weeklyRewardTrackTypes.raid),
@@ -856,6 +903,7 @@ function AngusUI:UpdateSyncCharacterGreatVaultData(characterData)
     return true
 end
 
+-- Updates tracked character currency totals.
 function AngusUI:UpdateSyncCharacterCurrenciesData(characterData)
     local currenciesData = {}
 
@@ -872,6 +920,7 @@ function AngusUI:UpdateSyncCharacterCurrenciesData(characterData)
     return true
 end
 
+-- Updates synced character gold.
 function AngusUI:UpdateSyncCharacterGoldData(characterData)
     local gold = GetCharacterGold()
     if characterData.gold == gold then
@@ -882,6 +931,7 @@ function AngusUI:UpdateSyncCharacterGoldData(characterData)
     return true
 end
 
+-- Merges newly observed concentration into profession sync data.
 function AngusUI:UpdateSyncCharacterProfessionConcentrationData(characterData)
     local concentrationSnapshot = self:GetProfessionConcentrationSnapshot(characterData.professions)
     if not concentrationSnapshot then
@@ -911,6 +961,7 @@ function AngusUI:UpdateSyncCharacterProfessionConcentrationData(characterData)
     return updated
 end
 
+-- Requests account-character currency data before totaling it.
 function AngusUI:RequestSyncAccountCurrencyData()
     if not C_CurrencyInfo or not C_CurrencyInfo.RequestCurrencyDataForAccountCharacters then
         return false
@@ -929,6 +980,7 @@ function AngusUI:RequestSyncAccountCurrencyData()
     return false
 end
 
+-- Totals tracked account-transferable currencies across characters.
 function AngusUI:BuildSyncAccountCurrenciesSnapshot()
     if not C_CurrencyInfo or not C_CurrencyInfo.FetchCurrencyDataFromAccountCharacters then
         return nil
@@ -966,6 +1018,7 @@ function AngusUI:BuildSyncAccountCurrenciesSnapshot()
     return currenciesData
 end
 
+-- Refreshes synced account currency totals when data is ready.
 function AngusUI:UpdateSyncAccountCurrenciesData(accountData)
     local currenciesData = self:BuildSyncAccountCurrenciesSnapshot()
     if not currenciesData or AreTablesEqual(accountData.currencies, currenciesData) then
@@ -976,6 +1029,7 @@ function AngusUI:UpdateSyncAccountCurrenciesData(accountData)
     return true
 end
 
+-- Captures warband bank gold, tabs, and item totals.
 function AngusUI:BuildWarbandBankSnapshot(existingWarbandBank)
     local warbandBankData = {
         gold = existingWarbandBank and existingWarbandBank.gold or 0,
@@ -1027,6 +1081,7 @@ function AngusUI:BuildWarbandBankSnapshot(existingWarbandBank)
     return warbandBankData, true
 end
 
+-- Refreshes synced warband bank data.
 function AngusUI:UpdateSyncAccountWarbandBankData(accountData)
     local warbandBankData = self:BuildWarbandBankSnapshot(accountData.warbandBank)
     if AreTablesEqual(accountData.warbandBank, warbandBankData) then
@@ -1037,6 +1092,7 @@ function AngusUI:UpdateSyncAccountWarbandBankData(accountData)
     return true
 end
 
+-- Rebuilds the full per-character sync snapshot for this reset.
 function AngusUI:UpdateSyncCharacterData(includeProfessionConcentration)
     local characterData = self:GetSyncCharacterData()
     local accountData = self:GetSyncAccountData()
@@ -1087,6 +1143,7 @@ function AngusUI:UpdateSyncCharacterData(includeProfessionConcentration)
     return characterData
 end
 
+-- Rebuilds the account-wide sync snapshot for this reset.
 function AngusUI:UpdateSyncAccountData()
     local accountData = self:GetSyncAccountData()
     local weeklyResetKey = GetWeeklyResetKey()
@@ -1109,6 +1166,7 @@ function AngusUI:UpdateSyncAccountData()
     return accountData
 end
 
+-- Delays gilded stash refresh until the UI value settles.
 function AngusUI:QueueSyncGildedRefresh()
     if self.syncGildedRefreshQueued then
         return
@@ -1121,6 +1179,7 @@ function AngusUI:QueueSyncGildedRefresh()
     end)
 end
 
+-- Delays concentration refresh until profession data settles.
 function AngusUI:QueueProfessionConcentrationRefresh(delaySeconds)
     if not GetCurrentProfessionConcentrationCurrencyID() then
         return
@@ -1139,6 +1198,7 @@ function AngusUI:QueueProfessionConcentrationRefresh(delaySeconds)
     end)
 end
 
+-- Reacts to currency changes with the correct sync refresh behavior.
 function AngusUI:SyncHandleCurrencyUpdate(currencyID)
     if currencyID == gildedStashCurrencyID then
         self:QueueSyncGildedRefresh()
@@ -1155,11 +1215,13 @@ function AngusUI:SyncHandleCurrencyUpdate(currencyID)
     end
 end
 
+-- Clears pending account-currency requests and resyncs.
 function AngusUI:SyncHandleAccountCurrencyDataUpdate()
     self.syncAccountCurrencyRequestPending = false
     self:SyncRefresh()
 end
 
+-- Runs sync updates and triggers chore-toast reactions to new completions.
 function AngusUI:SyncRefresh(includeProfessionConcentration)
     self:UpdateSyncAccountData()
     local previousCompletionSnapshot = nil
@@ -1183,6 +1245,7 @@ function AngusUI:SyncRefresh(includeProfessionConcentration)
     end
 end
 
+-- Registers sync event listeners and initializes sync state.
 function AngusUI:SyncInit()
     if self.syncInitialized then
         return

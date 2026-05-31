@@ -1,3 +1,4 @@
+-- Shows curated talent recommendations in-game so spec setup can be copied without leaving WoW.
 local _, AngusUI = ...
 
 local panelWidth = 360
@@ -6,6 +7,7 @@ local sectionSpacing = 4
 local panelOffsetX = 10
 local panelBottomOffset = 110
 
+-- Calculates how tall the recommendations panel should be.
 local function GetPanelHeight(sectionCount)
     if sectionCount <= 0 then
         return 0
@@ -528,11 +530,13 @@ local recommendations = {
     },
 }
 
+-- Finds the talents UI frame to attach recommendations to.
 local function GetClassTalentsFrame()
     local playerSpellsFrame = _G["PlayerSpellsFrame"]
     return playerSpellsFrame and playerSpellsFrame.TalentsFrame or nil
 end
 
+-- Selects the recommendation set for the player's current spec.
 local function GetCurrentRecommendation()
     local _, classFile = UnitClass("player")
     local classRecommendations = recommendations[classFile]
@@ -559,6 +563,7 @@ local function GetCurrentRecommendation()
     return classRecommendations[specID]
 end
 
+-- Creates a popup for copying talent import strings.
 local function CreateTalentDialog(parent)
     local dialog = CreateFrame("Frame", "AngusUITalentImportDialog", parent, "BackdropTemplate")
     dialog:SetSize(460, 160)
@@ -601,6 +606,7 @@ local function CreateTalentDialog(parent)
     return dialog
 end
 
+-- Shows the import popup with the selected talent code.
 local function ShowTalentDialog(dialog, talentCode)
     dialog.editBox:SetText(talentCode or "")
     dialog.editBox:HighlightText()
@@ -608,6 +614,7 @@ local function ShowTalentDialog(dialog, talentCode)
     dialog.editBox:SetFocus()
 end
 
+-- Creates one recommendation row in the panel.
 local function CreateSection(parent, index)
     local section = CreateFrame("Frame", nil, parent)
     section:SetSize(panelWidth, sectionHeight)
@@ -627,6 +634,7 @@ local function CreateSection(parent, index)
     return section
 end
 
+-- Creates the recommendations panel attached to the talents UI.
 local function CreatePanel()
     local classTalentsFrame = GetClassTalentsFrame()
     if not classTalentsFrame then
@@ -644,6 +652,7 @@ local function CreatePanel()
     return panel
 end
 
+-- Ensures the panel has enough rows for the current recommendations.
 local function EnsureSectionCount(panel, sectionCount)
     while #panel.sections < sectionCount do
         local section = CreateSection(panel, #panel.sections + 1)
@@ -652,6 +661,7 @@ local function EnsureSectionCount(panel, sectionCount)
     end
 end
 
+-- Rebuilds and shows the recommendation panel for the current spec.
 function AngusUI:TalentRecommendationsRefresh()
     local classTalentsFrame = GetClassTalentsFrame()
     if not classTalentsFrame then

@@ -1,3 +1,4 @@
+-- Chooses the most suitable AngusUI edit-mode layout for the player's current screen shape.
 local _, AngusUI = ...
 
 local uiWatcher = CreateFrame("Frame")
@@ -8,6 +9,7 @@ uiWatcher:SetScript("OnEvent", function()
     AngusUI:UI()
 end)
 
+-- Auto-selects the best AngusUI edit-mode layout for the player's screen ratio.
 function AngusUI:UI()
     local layouts = C_EditMode.GetLayouts();
     if not layouts or not layouts.layouts then

@@ -1,3 +1,4 @@
+-- Replaces world quest pins with reward-focused visuals so worthwhile quests stand out immediately.
 local _, AngusUI = ...
 
 local rewardCache = {}
@@ -51,28 +52,34 @@ worldQuestIconsWatcher:SetScript("OnEvent", function(_, event, ...)
     AngusUI:QueueWorldQuestIconsRefresh()
 end)
 
+-- Controls whether world quest reward icons should be shown.
 local function IsWorldQuestRewardsEnabled()
     local settingsDB = AngusUI.GetSettingsDB and AngusUI:GetSettingsDB() or nil
     return settingsDB == nil or settingsDB.worldQuestRewardIcons ~= false
 end
 
+-- Controls whether upgrade-worthy gear rewards should be highlighted.
 local function IsWorldQuestUpgradeArrowEnabled()
     local settingsDB = AngusUI.GetSettingsDB and AngusUI:GetSettingsDB() or nil
     return settingsDB == nil or settingsDB.worldQuestUpgradeArrow ~= false
 end
 
+-- Filters out currencies that should not affect quest icon selection.
 local function IsIgnoredRewardCurrency(currencyID)
     return currencyID ~= nil and ignoredRewardCurrencyIDs[currencyID] == true
 end
 
+-- Marks currencies that deserve special reward treatment.
 local function IsSpecialRewardCurrency(currencyID)
     return currencyID ~= nil and specialRewardCurrencyIDs[currencyID] == true
 end
 
+-- Marks items that deserve special reward treatment.
 local function IsSpecialRewardItem(itemID)
     return itemID ~= nil and specialRewardItemIDs[itemID] == true
 end
 
+-- Re-queues icon updates after missing item data loads.
 local function QueueRefreshFromItem(item)
     if not item then
         return
@@ -83,6 +90,7 @@ local function QueueRefreshFromItem(item)
     end)
 end
 
+-- Re-queues icon updates for an item ID once its data becomes available.
 local function QueueRefreshFromItemID(itemID)
     if not itemID or not Item or not Item.CreateFromItemID then
         return
@@ -94,6 +102,7 @@ local function QueueRefreshFromItemID(itemID)
     end
 end
 
+-- Retrieves a reward item's real item level for upgrade checks.
 local function GetDetailedRewardItemLevel(itemID)
     if not itemID then
         return nil
@@ -118,6 +127,7 @@ local function GetDetailedRewardItemLevel(itemID)
     return nil
 end
 
+-- Re-queues icon updates after equipped item data loads.
 local function QueueRefreshFromItemLocation(itemLocation)
     if not itemLocation or not itemLocation:IsValid() or not Item or not Item.CreateFromItemLocation then
         return
@@ -129,6 +139,7 @@ local function QueueRefreshFromItemLocation(itemLocation)
     end
 end
 
+-- Creates reusable visuals for displaying reward icons on quest pins.
 local function CreateRewardOverlay(frame)
     if frame.AngusUIRewardIcon then
         return frame.AngusUIRewardIcon, frame.AngusUIRewardBorder
@@ -167,6 +178,7 @@ local function CreateRewardOverlay(frame)
     return icon, border
 end
 
+-- Positions the upgrade border around the displayed reward icon.
 local function AnchorBorder(border, anchor)
     if not border or not anchor or border == anchor then
         return
@@ -215,6 +227,7 @@ local function AnchorBorder(border, anchor)
     end
 end
 
+-- Keeps a mask aligned to the chosen icon region.
 local function AnchorMask(mask, anchor)
     if not mask or not anchor then
         return
@@ -224,6 +237,7 @@ local function AnchorMask(mask, anchor)
     mask:SetAllPoints(anchor)
 end
 
+-- Places the reward overlay on the best available pin icon area.
 local function AnchorOverlay(frame, overlay, fallbackPoint, texture)
     overlay:ClearAllPoints()
 
@@ -248,6 +262,7 @@ local function AnchorOverlay(frame, overlay, fallbackPoint, texture)
     return nil
 end
 
+-- Preserves a rounded icon shape when replacing a pin texture.
 local function ApplyRoundMask(frame, texture)
     if not frame or not texture or not texture.AddMaskTexture or not texture.RemoveMaskTexture then
         return
@@ -271,6 +286,7 @@ local function ApplyRoundMask(frame, texture)
     end
 end
 
+-- Removes the temporary icon mask from a pin.
 local function RemoveRoundMask(frame)
     if not frame or not frame.AngusUIRewardTextureMask or not frame.AngusUIRewardMaskTarget then
         return
@@ -283,6 +299,7 @@ local function RemoveRoundMask(frame)
     frame.AngusUIRewardMaskTarget = nil
 end
 
+-- Restores a pin's original artwork after reward display is cleared.
 local function RestoreOriginalTexture(frame)
     local texture = frame and frame.AngusUIRewardTargetTexture
     if not texture then
@@ -322,6 +339,7 @@ local function RestoreOriginalTexture(frame)
     frame.AngusUIOriginalTextureBlendMode = nil
 end
 
+-- Swaps the pin's normal icon for the selected reward icon.
 local function ReplaceTexture(frame, texture, rewardIcon)
     if not frame or not texture or not rewardIcon then
         return false
@@ -354,6 +372,7 @@ local function ReplaceTexture(frame, texture, rewardIcon)
     return true
 end
 
+-- Clears all AngusUI reward visuals from a pin.
 local function ResetOverlay(frame)
     if not frame then
         return
@@ -371,6 +390,7 @@ local function ResetOverlay(frame)
     RestoreOriginalTexture(frame)
 end
 
+-- Maps an equip location to the slots used for upgrade comparison.
 local function GetInventorySlotsForEquipLocation(itemEquipLoc)
     if not itemEquipLoc then
         return nil
@@ -410,6 +430,7 @@ local function GetInventorySlotsForEquipLocation(itemEquipLoc)
     return slotCache[itemEquipLoc]
 end
 
+-- Gets the equipped item level for one comparison slot.
 local function GetEquippedItemLevel(slotId)
     local itemLocation = ItemLocation and ItemLocation:CreateFromEquipmentSlot(slotId)
     if not itemLocation or not itemLocation:IsValid() then
@@ -425,6 +446,7 @@ local function GetEquippedItemLevel(slotId)
     return nil
 end
 
+-- Finds the relevant equipped item level baseline for a reward.
 local function GetComparisonItemLevel(slots)
     if not slots then
         return nil
@@ -443,6 +465,7 @@ local function GetComparisonItemLevel(slots)
     return comparisonLevel
 end
 
+-- Normalizes raw reward data into a comparable reward record.
 local function BuildRewardEntry(kind, icon, itemID, itemLevel, itemName, currencyID, currencyName)
     if not icon then
         return nil
@@ -501,6 +524,7 @@ local function BuildRewardEntry(kind, icon, itemID, itemLevel, itemName, currenc
     }
 end
 
+-- Extracts an icon from variable currency reward data.
 local function GetCurrencyRewardIcon(currencyInfo)
     if type(currencyInfo) ~= "table" then
         return nil
@@ -513,6 +537,7 @@ local function GetCurrencyRewardIcon(currencyInfo)
         or currencyInfo["texture"]
 end
 
+-- Chooses the most meaningful reward to represent a world quest.
 local function GetQuestReward(questID)
     if not questID then
         return nil
@@ -580,6 +605,7 @@ local function GetQuestReward(questID)
     return bestReward or nil
 end
 
+-- Limits processing to actual world quest pins.
 local function IsRelevantWorldMapQuestPin(pin)
     if not pin or type(pin.questID) ~= "number" or pin.questID <= 0 then
         return false
@@ -600,6 +626,7 @@ local function IsRelevantWorldMapQuestPin(pin)
     return pin.questTagInfo ~= nil or pin.tagInfo ~= nil or pin.worldQuestType ~= nil
 end
 
+-- Decides whether a gear reward should be marked as an upgrade.
 ShouldShowUpgradeArrow = function(reward)
     if not reward or reward.kind ~= "gear" or not IsWorldQuestUpgradeArrowEnabled() then
         return false
@@ -622,6 +649,7 @@ ShouldShowUpgradeArrow = function(reward)
     return reward.itemLevel > equippedLevel
 end
 
+-- Applies the chosen reward visuals to one world quest pin.
 local function ApplyRewardToWorldMapPin(pin)
     if not IsRelevantWorldMapQuestPin(pin) then
         ResetOverlay(pin)
@@ -683,6 +711,7 @@ local function ApplyRewardToWorldMapPin(pin)
     end
 end
 
+-- Updates reward visuals on all visible world quest pins.
 local function RefreshWorldMapPins(worldMapFrame)
     if not worldMapFrame or not worldMapFrame.EnumeratePinsByTemplate then
         return
@@ -695,6 +724,7 @@ local function RefreshWorldMapPins(worldMapFrame)
     end
 end
 
+-- Removes reward visuals from all visible world quest pins.
 local function ClearWorldMapPins(worldMapFrame)
     if not worldMapFrame or not worldMapFrame.EnumeratePinsByTemplate then
         return
@@ -707,11 +737,13 @@ local function ClearWorldMapPins(worldMapFrame)
     end
 end
 
+-- Clears cached reward data so quest icons can be recalculated.
 function AngusUI:ResetWorldQuestRewardCache()
     rewardCache = {}
     rewardItemLevelCache = {}
 end
 
+-- Batches repeated refresh requests into one deferred update.
 function AngusUI:QueueWorldQuestIconsRefresh(forceClearCache)
     if forceClearCache then
         self:ResetWorldQuestRewardCache()
@@ -728,6 +760,7 @@ function AngusUI:QueueWorldQuestIconsRefresh(forceClearCache)
     end)
 end
 
+-- Installs hooks and events needed for world quest reward icons.
 function AngusUI:InitializeWorldQuestIcons()
     if self.worldQuestIconsInitialized then
         return
@@ -748,6 +781,7 @@ function AngusUI:InitializeWorldQuestIcons()
     end
 end
 
+-- Runs the world quest reward icon feature or clears it when disabled.
 function AngusUI:WorldQuestIcons()
     self:InitializeWorldQuestIcons()
 

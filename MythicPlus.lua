@@ -1,3 +1,4 @@
+-- Adds a compact Mythic+ reward reference so weekly upgrade decisions are easier to make in-game.
 local _, AngusUI = ...
 
 local Inconsolata = "Interface\\AddOns\\AngusUI\\Inconsolata.ttf"
@@ -13,22 +14,27 @@ mythicPlusWatcher:SetScript("OnEvent", function(self)
     self:UnregisterEvent("MYTHIC_PLUS_CURRENT_AFFIX_UPDATE")
 end)
 
+-- Colors reward values to identify Champion-track rewards.
 local function champion(itemLevel)
     return RARE_BLUE_COLOR:WrapTextInColorCode(itemLevel)
 end
 
+-- Colors reward values to identify Hero-track rewards.
 local function hero(itemLevel)
     return ITEM_EPIC_COLOR:WrapTextInColorCode(itemLevel)
 end
 
+-- Colors reward values to identify Myth-track rewards.
 local function mythic(itemLevel)
     return ITEM_LEGENDARY_COLOR:WrapTextInColorCode(itemLevel)
 end
 
+-- Keeps the Mythic+ reward table aligned and readable.
 local function cell(value)
     return string.format("%-4s", tostring(value))
 end
 
+-- Adds a quick-reference Mythic+ reward chart to the weekly panel.
 function AngusUI:MythicPlus()
     local frame = CreateFrame("Frame", "AngusUIMythicPlusRewards", ChallengesFrame.WeeklyInfo)
     frame:SetSize(1, 1)

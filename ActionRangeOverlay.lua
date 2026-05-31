@@ -1,9 +1,11 @@
+-- Makes action range failures more obvious so unusable buttons are easier to read in combat.
 local _, AngusUI = ...
 
 local OVERLAY_ALPHA = 0.42
 local registeredButtons = {}
 local actionRangeOverlayWatcher = CreateFrame("Frame")
 
+-- Checks whether an action should show range feedback at all.
 local function ActionHasRangeRequirements(action)
     if C_ActionBar and C_ActionBar.HasRangeRequirements then
         return C_ActionBar.HasRangeRequirements(action)
@@ -12,6 +14,7 @@ local function ActionHasRangeRequirements(action)
     return ActionHasRange and ActionHasRange(action)
 end
 
+-- Determines whether an action is currently out of range.
 local function IsActionOutOfRange(action)
     if C_ActionBar and C_ActionBar.IsActionInRange then
         return C_ActionBar.IsActionInRange(action) == false
@@ -20,10 +23,12 @@ local function IsActionOutOfRange(action)
     return IsActionInRange(action) == false
 end
 
+-- Finds the icon texture that should receive the range overlay.
 local function GetButtonIcon(button)
     return button and (button.icon or button.Icon or (button.GetName and _G[button:GetName() .. "Icon"]))
 end
 
+-- Creates or reuses the red overlay used for out-of-range actions.
 local function GetRangeOverlay(button)
     local icon = GetButtonIcon(button)
     if not icon then
@@ -44,6 +49,7 @@ local function GetRangeOverlay(button)
     return overlay
 end
 
+-- Applies the addon's out-of-range visuals to an action button.
 local function ApplyRangeVisual(button)
     local outOfRange = button.AngusUIRangeChecks and button.AngusUIOutOfRange
     local overlay = GetRangeOverlay(button)
@@ -71,6 +77,7 @@ local function ApplyRangeVisual(button)
     end
 end
 
+-- Clears stored range state when a button has no valid action.
 local function ResetRangeState(button)
     if not button then
         return
@@ -80,6 +87,7 @@ local function ResetRangeState(button)
     button.AngusUIOutOfRange = false
 end
 
+-- Recalculates and applies range state for a button's current action.
 local function RefreshRangeOverlay(button)
     if not registeredButtons[button] then
         return
@@ -102,6 +110,7 @@ local function RefreshRangeOverlay(button)
     ApplyRangeVisual(button)
 end
 
+-- Uses Blizzard's range update signals to keep overlays in sync.
 local function UpdateRangeOverlay(button, checksRange, inRange)
     if not registeredButtons[button] then
         return
@@ -117,6 +126,7 @@ local function UpdateRangeOverlay(button, checksRange, inRange)
     ApplyRangeVisual(button)
 end
 
+-- Starts managing range overlay updates for one action button.
 local function RegisterButton(button)
     if registeredButtons[button] then
         return
@@ -129,6 +139,7 @@ local function RegisterButton(button)
     RefreshRangeOverlay(button)
 end
 
+-- Enables range overlays across all tracked action buttons.
 function AngusUI:EnableActionRangeOverlay()
     if self.actionRangeOverlayEnabled then
         return

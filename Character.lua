@@ -1,3 +1,4 @@
+-- Enhances the character panel so gear quality, item level, and missing upgrades are easier to spot.
 local _, AngusUI = ...
 
 local Inconsolata = "Interface\\AddOns\\AngusUI\\Inconsolata.ttf"
@@ -5,6 +6,7 @@ local TOOLTIP_LINE_GEM_SOCKET = Enum and Enum.TooltipDataLineType and Enum.Toolt
 local TOOLTIP_LINE_ITEM_ENCHANTMENT_PERMANENT = Enum and Enum.TooltipDataLineType and Enum.TooltipDataLineType.ItemEnchantmentPermanent or 15
 local characterWatcher
 
+-- Refreshes the character panel when a relevant bank interaction opens.
 local function RefreshCharacterForInteraction(interactionType)
     if
         interactionType ~= Enum.PlayerInteractionType.Banker and
@@ -16,6 +18,7 @@ local function RefreshCharacterForInteraction(interactionType)
     AngusUI:RefreshCharacterPanel()
 end
 
+-- Keeps the extra item-level text visually matched to the stat frame.
 local function UpdateItemLevelFrameMaxTextFont(statFrame, text)
     local valueText = statFrame and statFrame.Value
     local fontObject = valueText and valueText:GetFontObject()
@@ -36,6 +39,7 @@ local function UpdateItemLevelFrameMaxTextFont(statFrame, text)
     end
 end
 
+-- Creates or reuses the extra text that shows the higher average item level.
 local function GetItemLevelFrameMaxText(statFrame)
     if statFrame.AngusUIMaxItemLevelText then
         return statFrame.AngusUIMaxItemLevelText
@@ -52,6 +56,7 @@ local function GetItemLevelFrameMaxText(statFrame)
     return text
 end
 
+-- Shows a second average item level when carried gear beats equipped gear.
 local function RefreshCharacterStatsItemLevel()
     if not CharacterStatsPane or not CharacterStatsPane.ItemLevelFrame then
         return
@@ -129,6 +134,7 @@ local characterSlotFrames = {
     "CharacterSecondaryHandSlot",
 }
 
+-- Creates or reuses per-slot text for displaying item level.
 local function PrepareCharacterItemLevelText(button)
     if not button then
         return nil
@@ -159,6 +165,7 @@ local function PrepareCharacterItemLevelText(button)
     return text
 end
 
+-- Chooses a safe quality color for character slot overlays.
 local function GetCharacterQualityColor(quality)
     local r, g, b = quality and C_Item and C_Item.GetItemQualityColor and C_Item.GetItemQualityColor(quality)
     if r and g and b then
@@ -173,6 +180,7 @@ local function GetCharacterQualityColor(quality)
     return 1, 0.82, 0
 end
 
+-- Gets a dependable item level value for an equipped item.
 local function GetCharacterItemLevel(item)
     if not item or item.IsItemEmpty and item:IsItemEmpty() then
         return nil
@@ -191,6 +199,7 @@ local function GetCharacterItemLevel(item)
     return nil
 end
 
+-- Clears the item-level overlay from a character slot.
 local function HideCharacterItemLevel(button)
     local text = button and button.AngusUICharacterItemLevelText
     if text then
@@ -199,6 +208,7 @@ local function HideCharacterItemLevel(button)
     end
 end
 
+-- Shows item level on a character slot when it is worth displaying.
 local function UpdateCharacterItemLevel(button, item)
     local text = PrepareCharacterItemLevelText(button)
     if not text then
@@ -216,6 +226,7 @@ local function UpdateCharacterItemLevel(button, item)
     end
 end
 
+-- Creates or reuses per-slot text for enchant and socket warnings.
 local function PrepareCharacterWarningText(button)
     if not button then
         return nil
@@ -243,6 +254,7 @@ local function PrepareCharacterWarningText(button)
     return text
 end
 
+-- Clears the warning overlay from a character slot.
 local function HideCharacterWarning(button)
     local text = button and button.AngusUICharacterWarningText
     if text then
@@ -251,6 +263,7 @@ local function HideCharacterWarning(button)
     end
 end
 
+-- Resets all custom overlays on character equipment slots.
 local function ClearCharacterDecorations()
     for _, frameName in ipairs(characterSlotFrames) do
         local button = _G[frameName]
@@ -259,6 +272,7 @@ local function ClearCharacterDecorations()
     end
 end
 
+-- Detects whether an item link already contains a permanent enchant.
 local function GetPermanentEnchantId(itemLink)
     if type(itemLink) ~= "string" then
         return nil
@@ -272,6 +286,7 @@ local function GetPermanentEnchantId(itemLink)
     return nil
 end
 
+-- Extracts link fields needed for gem and enchant checks.
 local function GetLinkValues(link)
     if type(link) ~= "string" or not LinkUtil or not LinkUtil.ExtractLink then
         return nil
@@ -285,6 +300,7 @@ local function GetLinkValues(link)
     return linkType
 end
 
+-- Checks tooltip data for a specific kind of warning line.
 local function HasTooltipLineType(tooltipData, lineType)
     local lines = tooltipData and tooltipData.lines
     if not lines then
@@ -300,6 +316,7 @@ local function HasTooltipLineType(tooltipData, lineType)
     return false
 end
 
+-- Fetches tooltip data for an equipped inventory slot.
 local function GetInventoryTooltipData(slotID)
     if not C_TooltipInfo or not C_TooltipInfo.GetInventoryItem then
         return nil
@@ -308,6 +325,7 @@ local function GetInventoryTooltipData(slotID)
     return C_TooltipInfo.GetInventoryItem("player", slotID)
 end
 
+-- Determines whether an equipped item has a permanent enhancement.
 local function HasInventoryPermanentEnhancement(slotID, itemLink)
     if GetPermanentEnchantId(itemLink) then
         return true
@@ -316,6 +334,7 @@ local function HasInventoryPermanentEnhancement(slotID, itemLink)
     return HasTooltipLineType(GetInventoryTooltipData(slotID), TOOLTIP_LINE_ITEM_ENCHANTMENT_PERMANENT)
 end
 
+-- Determines whether an equipped item still has an unfilled socket.
 local function HasEmptyGemSocket(slotID, itemLink)
     if type(itemLink) == "string" then
         local getItemStats = C_Item and C_Item.GetItemStats or GetItemStats
@@ -345,10 +364,12 @@ local function HasEmptyGemSocket(slotID, itemLink)
     return HasTooltipLineType(GetInventoryTooltipData(slotID), TOOLTIP_LINE_GEM_SOCKET)
 end
 
+-- Recognizes weapon types that can take Midnight enchants.
 local function IsMidnightEnchantableWeapon(itemEquipLoc)
     return midnightWeaponEnchantLocations[itemEquipLoc] == true
 end
 
+-- Decides whether a slot should be treated as enchantable for warnings.
 local function IsMidnightEnchantableSlot(slotID, itemLink, itemID)
     if midnightAlwaysEnchantableSlots[slotID] then
         return true
@@ -366,6 +387,7 @@ local function IsMidnightEnchantableSlot(slotID, itemLink, itemID)
     return IsMidnightEnchantableWeapon(itemEquipLoc)
 end
 
+-- Places warning text where it stays readable around the slot.
 local function PositionCharacterWarningText(button, text)
     text:ClearAllPoints()
 
@@ -395,6 +417,7 @@ local function PositionCharacterWarningText(button, text)
     text:SetPoint("LEFT", button, "RIGHT", 2, 0)
 end
 
+-- Decides which socket or enchant status message the slot should show.
 local function BuildCharacterWarningText(slotID, itemLink, itemID)
     local warnings = {}
     local hasPermanentEnhancement = HasInventoryPermanentEnhancement(slotID, itemLink)
@@ -424,6 +447,7 @@ local function BuildCharacterWarningText(slotID, itemLink, itemID)
     return nil
 end
 
+-- Refreshes a slot's item-level and warning overlays after item data loads.
 local function UpdateCharacterSlotWarning(button)
     if not button or not button.GetID or not Item or not Item.CreateFromEquipmentSlot then
         return
@@ -459,6 +483,7 @@ local function UpdateCharacterSlotWarning(button)
     end)
 end
 
+-- Fully rebuilds custom overlays for one equipment slot.
 local function RefreshCharacterSlot(button)
     HideCharacterWarning(button)
     HideCharacterItemLevel(button)
@@ -475,6 +500,7 @@ local function RefreshCharacterSlot(button)
     UpdateCharacterSlotWarning(button)
 end
 
+-- Refreshes overlays for all visible character equipment slots.
 function AngusUI:CharacterSlotWarnings()
     ClearCharacterDecorations()
 
@@ -483,15 +509,18 @@ function AngusUI:CharacterSlotWarnings()
     end
 end
 
+-- Refreshes the character panel's custom item-level and warning displays.
 function AngusUI:CharacterPanel()
     RefreshCharacterStatsItemLevel()
     self:CharacterSlotWarnings()
 end
 
+-- Provides a single entry point for refreshing the custom character view.
 function AngusUI:RefreshCharacterPanel()
     self:CharacterPanel()
 end
 
+-- Hooks character updates so the panel overlays stay current.
 function AngusUI:CharacterInit()
     if self.characterSlotHooked or not PaperDollItemSlotButton_Update then
         return

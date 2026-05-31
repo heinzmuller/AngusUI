@@ -1,3 +1,4 @@
+-- Turns synced weekly progress into a compact in-game checklist so chores are easier to track.
 local _, AngusUI = ...
 
 local choresWatcher
@@ -29,6 +30,7 @@ local placeholderText = "-"
 local readyTexture = "Interface\\RaidFrame\\ReadyCheck-Ready"
 local notReadyTexture = "Interface\\RaidFrame\\ReadyCheck-NotReady"
 
+-- Chooses display colors for complete versus incomplete chores.
 local function GetBooleanColor(complete)
     if complete then
         return 0.2, 0.9, 0.35
@@ -37,6 +39,7 @@ local function GetBooleanColor(complete)
     return 1, 0.35, 0.35
 end
 
+-- Chooses display colors for progress-based chore values.
 local function GetProgressColor(current, total)
     if current >= total then
         return 0.2, 0.9, 0.35
@@ -49,6 +52,7 @@ local function GetProgressColor(current, total)
     return 1, 0.35, 0.35
 end
 
+-- Packages one toast column's display data.
 local function CreateCellData(header, width, valueText, r, g, b, tooltipTitle, tooltipText, iconTexture)
     return {
         header = header,
@@ -63,16 +67,19 @@ local function CreateCellData(header, width, valueText, r, g, b, tooltipTitle, t
     }
 end
 
+-- Builds a yes-or-no chore cell for the toast.
 local function CreateBooleanCell(header, width, complete, tooltipTitle, tooltipText)
     local r, g, b = GetBooleanColor(complete)
     return CreateCellData(header, width, nil, r, g, b, tooltipTitle, tooltipText, complete and readyTexture or notReadyTexture)
 end
 
+-- Builds a counted-progress chore cell for the toast.
 local function CreateFractionCell(header, width, current, total, tooltipTitle, tooltipText)
     local r, g, b = GetProgressColor(current, total)
     return CreateCellData(header, width, current .. "/" .. total, r, g, b, tooltipTitle, tooltipText)
 end
 
+-- Builds a remaining-work chore cell for the toast.
 local function CreateRemainingCell(header, width, remaining, tooltipTitle, tooltipText)
     if remaining <= 0 then
         local r, g, b = GetBooleanColor(true)
@@ -83,10 +90,12 @@ local function CreateRemainingCell(header, width, remaining, tooltipTitle, toolt
     return CreateCellData(header, width, tostring(remaining), r, g, b, tooltipTitle, tooltipText)
 end
 
+-- Builds filler cells when no real data is available.
 local function CreatePlaceholderCell(header, width, tooltipTitle, tooltipText)
     return CreateCellData(header, width, placeholderText, 0.6, 0.6, 0.6, tooltipTitle, tooltipText)
 end
 
+-- Shows explanatory tooltip text for a toast column.
 local function ShowColumnTooltip(frame)
     if not frame.tooltipTitle then
         return
@@ -100,6 +109,7 @@ local function ShowColumnTooltip(frame)
     GameTooltip:Show()
 end
 
+-- Applies the shared visual style to the chores toast.
 local function EnsureToastStyle(frame)
     if frame.style then
         return frame.style
@@ -120,11 +130,13 @@ local function EnsureToastStyle(frame)
     return style
 end
 
+-- Pauses automatic hiding while the toast is being used.
 local function StopToastHideCountdown(toast)
     toast.hideAt = nil
     toast:SetScript("OnUpdate", nil)
 end
 
+-- Auto-hides the toast after a delay.
 local function StartToastHideCountdown(toast, durationSeconds)
     toast.hideAt = GetTime() + (durationSeconds or toastDurationSeconds)
     toast:SetScript("OnUpdate", function(frame)
@@ -135,6 +147,7 @@ local function StartToastHideCountdown(toast, durationSeconds)
     end)
 end
 
+-- Creates the toast's fade-in animation once.
 local function EnsureToastFadeInAnimation(toast)
     if toast.fadeInAnimation then
         return toast.fadeInAnimation
@@ -156,6 +169,7 @@ local function EnsureToastFadeInAnimation(toast)
     return animationGroup
 end
 
+-- Plays the toast's show animation cleanly.
 local function PlayToastFadeIn(toast)
     local animationGroup = EnsureToastFadeInAnimation(toast)
     toast.pendingHideAfterFadeOut = false
@@ -167,6 +181,7 @@ local function PlayToastFadeIn(toast)
     animationGroup:Play()
 end
 
+-- Creates the toast's fade-out animation once.
 local function EnsureToastFadeOutAnimation(toast)
     if toast.fadeOutAnimation then
         return toast.fadeOutAnimation
@@ -191,6 +206,7 @@ local function EnsureToastFadeOutAnimation(toast)
     return animationGroup
 end
 
+-- Dismisses the toast with animation.
 local function FadeOutToast(toast)
     if not toast:IsShown() then
         return
@@ -209,6 +225,7 @@ local function FadeOutToast(toast)
     animationGroup:Play()
 end
 
+-- Reuses or creates a section label in the toast grid.
 local function EnsureGroupLabel(toast, index)
     if toast.groupLabels[index] then
         return toast.groupLabels[index]
@@ -223,6 +240,7 @@ local function EnsureGroupLabel(toast, index)
     return label
 end
 
+-- Reuses or creates a divider between toast columns.
 local function EnsureDivider(toast, index)
     if toast.dividers[index] then
         return toast.dividers[index]
@@ -234,6 +252,7 @@ local function EnsureDivider(toast, index)
     return divider
 end
 
+-- Reuses or creates a toast column frame.
 local function EnsureColumn(toast, index)
     if toast.columns[index] then
         return toast.columns[index]
@@ -268,6 +287,7 @@ local function EnsureColumn(toast, index)
     return column
 end
 
+-- Lazily builds the chores toast UI and its behaviors.
 local function EnsureToast(self)
     if self.choresToast then
         return self.choresToast
@@ -335,6 +355,7 @@ local function EnsureToast(self)
     return toast
 end
 
+-- Converts profession sync data into toast sections.
 local function BuildProfessionGroups(self, professionSnapshot)
     local groups = {}
     local professionDefinitions = self.GetCurrentProfessionSyncData and self:GetCurrentProfessionSyncData() or {}
@@ -387,6 +408,7 @@ local function BuildProfessionGroups(self, professionSnapshot)
     return groups
 end
 
+-- Builds the chores toast contents from current sync data.
 function AngusUI:BuildChoresGridData()
     local characterData = self.GetSyncCharacterData and self:GetSyncCharacterData() or nil
     local preyData = characterData and characterData.prey or {}
@@ -425,6 +447,7 @@ function AngusUI:BuildChoresGridData()
     return groups
 end
 
+-- Reduces chore state to completion flags for change detection.
 function AngusUI:BuildChoresCompletionSnapshot(characterData)
     local delvesData = characterData and characterData.delves or {}
     local preyData = characterData and characterData.prey or {}
@@ -456,6 +479,7 @@ function AngusUI:BuildChoresCompletionSnapshot(characterData)
     }
 end
 
+-- Detects whether any tracked chore just became complete.
 function AngusUI:DidAnyChoreComplete(previousSnapshot, currentSnapshot)
     if not previousSnapshot or not currentSnapshot then
         return false
@@ -500,6 +524,7 @@ function AngusUI:DidAnyChoreComplete(previousSnapshot, currentSnapshot)
     return false
 end
 
+-- Lays out the chores toast for the current set of groups.
 local function UpdateToastLayout(toast, groups)
     local gridHeight = groupHeaderHeight + columnHeaderHeight + valueRowHeight
     local totalWidth = 0
@@ -618,6 +643,7 @@ local function UpdateToastLayout(toast, groups)
     end
 end
 
+-- Refreshes the visible chores toast with current data.
 function AngusUI:RefreshChoresToast()
     if not self.choresToast then
         return
@@ -626,6 +652,7 @@ function AngusUI:RefreshChoresToast()
     UpdateToastLayout(self.choresToast, self:BuildChoresGridData())
 end
 
+-- Shows the chores toast, optionally forcing it to reopen.
 function AngusUI:ShowChoresToast(force, durationSeconds)
     if not force and self.choresToastShown then
         return
@@ -646,14 +673,17 @@ function AngusUI:ShowChoresToast(force, durationSeconds)
     end
 end
 
+-- Briefly shows the toast when a chore completes.
 function AngusUI:ShowCompletedChoreToast()
     self:ShowChoresToast(true, toastCompletionDurationSeconds)
 end
 
+-- Shows the longer initial-login chores toast.
 function AngusUI:ShowInitialChoresToast()
     self:ShowChoresToast(false, toastInitialDurationSeconds)
 end
 
+-- Initializes the chores toast flow for login and loading events.
 function AngusUI:ChoresInit()
     if self.choresInitialized then
         return

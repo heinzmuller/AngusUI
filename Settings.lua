@@ -1,3 +1,4 @@
+-- Defines AngusUI's saved settings and exposes them through the Blizzard settings UI.
 local _, AngusUI = ...
 
 local defaultFriendsExtraWidth = 50
@@ -10,6 +11,7 @@ local defaultWorldQuestRewardIcons = true
 local defaultWorldQuestUpgradeArrow = true
 local defaultHidePartyLabel = true
 
+-- Returns the saved settings table used by the addon.
 function AngusUI:GetSettingsDB()
     AngusUIDB = AngusUIDB or {}
     AngusUIDB.settings = AngusUIDB.settings or {}
@@ -17,6 +19,7 @@ function AngusUI:GetSettingsDB()
     return AngusUIDB.settings
 end
 
+-- Sets up default settings and registers the AngusUI settings panel.
 function AngusUI:SettingsInit()
     if self.settingsInitialized then
         return
@@ -137,6 +140,7 @@ function AngusUI:SettingsInit()
     Settings.CreateSlider(category, themeDarknessSetting, themeOptions)
     Settings.CreateSlider(category, themeButtonDarknessSetting, themeOptions)
 
+    -- Reapplies theme state and updates whether theme-related options are usable.
     local function UpdateThemeEnabled()
         AngusUI:ApplyTheme()
         local enabled = themeEnabledSetting:GetValue()

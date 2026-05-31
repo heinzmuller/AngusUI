@@ -1,3 +1,4 @@
+-- Simplifies teleport-cloak swapping so the player can leave and return without manual gear juggling.
 local _, AngusUI = ...
 
 local nonTeleportBack
@@ -16,6 +17,7 @@ for _, id in ipairs(backIds) do
     backs[id] = true
 end
 
+-- Searches the bags for the first item matching a chosen condition.
 local function FindItemInBags(matchFunc)
     for bag = BACKPACK_CONTAINER, NUM_TOTAL_EQUIPPED_BAG_SLOTS do
         local numSlots = C_Container.GetContainerNumSlots(bag)
@@ -30,6 +32,7 @@ local function FindItemInBags(matchFunc)
     end
 end
 
+-- Finds an available teleport cloak in the bags.
 local function FindTeleportBack()
     return FindItemInBags(function(bag, slot, itemId)
         if not backs[itemId] then
@@ -41,6 +44,7 @@ local function FindTeleportBack()
     end)
 end
 
+-- Finds the previously saved original cloak by its unique identity.
 local function FindItemByGuid(targetGuid)
     if not targetGuid then
         return
@@ -57,6 +61,7 @@ local function FindItemByGuid(targetGuid)
     end)
 end
 
+-- Equips a cloak from the bags into the back slot.
 local function EquipBackFromBag(bag, slot)
     if not bag or not slot then
         return false
@@ -67,6 +72,7 @@ local function EquipBackFromBag(bag, slot)
     return true
 end
 
+-- Swaps between a teleport cloak and the original cloak for easy return trips.
 function AngusUI:TeleportBack()
     local equippedItemId = GetInventoryItemID("player", 15)
 

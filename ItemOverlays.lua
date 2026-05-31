@@ -1,3 +1,4 @@
+-- Adds bag, bank, and flyout overlays so important gear details can be judged at a glance.
 local _, AngusUI = ...
 
 local Inconsolata = "Interface\\AddOns\\AngusUI\\Inconsolata.ttf"
@@ -40,6 +41,7 @@ local bagEquipLocations = {
     INVTYPE_RANGEDRIGHT = true,
 }
 
+-- Creates or reuses an overlay container for an item button.
 local function PrepareItemButton(button)
     if not button then
         return nil
@@ -56,6 +58,7 @@ local function PrepareItemButton(button)
     return overlay
 end
 
+-- Checks whether warband bank deposit actions are currently available.
 local function CanUseAccountBank()
     if
         not ACCOUNT_BANK_TYPE or
@@ -69,6 +72,7 @@ local function CanUseAccountBank()
     return C_Bank.CanUseBank(ACCOUNT_BANK_TYPE) == true
 end
 
+-- Detects refundable items that require a safer deposit flow.
 local function HasRefundableAccountBankItems()
     if
         not ACCOUNT_BANK_TYPE or
@@ -87,6 +91,7 @@ local function HasRefundableAccountBankItems()
     end) == true
 end
 
+-- Deposits eligible items into the warband bank with confirmation when needed.
 local function DepositWarboundItemsToWarbandBank()
     if not CanUseAccountBank() then
         return
@@ -99,6 +104,7 @@ local function DepositWarboundItemsToWarbandBank()
     end
 end
 
+-- Shows the deposit shortcut only when it is useful.
 local function RefreshDepositWarboundButton(button)
     if not button then
         return
@@ -109,6 +115,7 @@ local function RefreshDepositWarboundButton(button)
     button:SetShown(bankFrame and bankFrame:IsShown() and isCharacterBank and CanUseAccountBank())
 end
 
+-- Creates or reuses the bank button for depositing warbound items.
 local function EnsureDepositWarboundButton()
     if not BankFrame then
         return nil
@@ -142,6 +149,7 @@ local function EnsureDepositWarboundButton()
     return button
 end
 
+-- Creates or reuses the bottom label for item level.
 local function GetOrCreateItemLevelText(button, fontSize, yOffset)
     if not button then
         return nil
@@ -168,6 +176,7 @@ local function GetOrCreateItemLevelText(button, fontSize, yOffset)
     return text
 end
 
+-- Creates or reuses the top label for bind status.
 local function GetOrCreateBindText(button)
     if not button then
         return nil
@@ -194,6 +203,7 @@ local function GetOrCreateBindText(button)
     return text
 end
 
+-- Creates or reuses a background to keep overlay text readable.
 local function GetOrCreateOverlayBackground(button, key)
     if not button then
         return nil
@@ -215,6 +225,7 @@ local function GetOrCreateOverlayBackground(button, key)
     return background
 end
 
+-- Finds the icon texture tied to an item button.
 local function GetButtonIcon(button)
     if not button then
         return nil
@@ -238,6 +249,7 @@ local function GetButtonIcon(button)
     return nil
 end
 
+-- Creates or reuses a visual marker for junk items.
 local function GetOrCreateJunkIcon(button)
     if not button then
         return nil
@@ -261,6 +273,7 @@ local function GetOrCreateJunkIcon(button)
     return icon
 end
 
+-- Clears and hides one text overlay and its background.
 local function HideTextOverlay(text, background)
     if text then
         text:SetText("")
@@ -272,6 +285,7 @@ local function HideTextOverlay(text, background)
     end
 end
 
+-- Resets all custom overlay visuals on an item button.
 local function HideButtonOverlays(button)
     if not button then
         return
@@ -291,6 +305,7 @@ local function HideButtonOverlays(button)
     end
 end
 
+-- Clears overlays from every item in one bag frame.
 local function HideBagFrameItemOverlays(frame)
     if not frame or not frame.EnumerateValidItems then
         return
@@ -301,6 +316,7 @@ local function HideBagFrameItemOverlays(frame)
     end
 end
 
+-- Clears overlays from all visible bag frames.
 local function HideBagItemOverlays()
     HideBagFrameItemOverlays(ContainerFrameCombinedBags)
 
@@ -309,6 +325,7 @@ local function HideBagItemOverlays()
     end
 end
 
+-- Clears overlays from equipment flyout buttons.
 local function HideFlyoutItemOverlays()
     if not EquipmentFlyoutFrame or not EquipmentFlyoutFrame.buttons then
         return
@@ -319,6 +336,7 @@ local function HideFlyoutItemOverlays()
     end
 end
 
+-- Fits and places the label background behind overlay text.
 local function UpdateOverlayBackground(background, button, text, anchor)
     local height = math.max(12, math.ceil((text:GetStringHeight() or 0) + LABEL_BACKGROUND_PADDING))
 
@@ -348,10 +366,12 @@ local function UpdateOverlayBackground(background, button, text, anchor)
     background:Show()
 end
 
+-- Limits bind labels to items important enough to call out.
 local function ShouldShowBindOverlayForQuality(quality)
     return quality and quality > ITEM_QUALITY_COMMON
 end
 
+-- Derives a readable overlay color from item quality.
 local function GetQualityColor(quality)
     if quality ~= nil and C_Item and C_Item.GetItemQualityColor then
         local r, g, b = C_Item.GetItemQualityColor(quality)
@@ -365,6 +385,7 @@ local function GetQualityColor(quality)
     return 1, 1, 1
 end
 
+-- Suppresses item levels too low to be worth showing.
 local function NormalizeItemLevel(itemLevel)
     if not itemLevel or itemLevel <= 0 or itemLevel < MIN_ITEM_LEVEL_DISPLAY then
         return nil
@@ -373,10 +394,12 @@ local function NormalizeItemLevel(itemLevel)
     return itemLevel
 end
 
+-- Identifies item types that should receive gear overlays.
 local function IsRelevantEquipLocation(itemEquipLoc)
     return bagEquipLocations[itemEquipLoc] == true
 end
 
+-- Ignores bag items that are not equippable gear.
 local function IsRelevantContainerItem(containerID, slotID)
     if not C_Container or not C_Container.GetContainerItemID then
         return false
@@ -391,6 +414,7 @@ local function IsRelevantContainerItem(containerID, slotID)
     return IsRelevantEquipLocation(itemEquipLoc)
 end
 
+-- Gets a display-worthy item level from loaded item data.
 local function GetItemLevelFromItem(item)
     if not item or item.IsItemEmpty and item:IsItemEmpty() then
         return nil
@@ -409,16 +433,19 @@ local function GetItemLevelFromItem(item)
     return nil
 end
 
+-- Reads item quality from a bag or bank slot.
 local function GetContainerQuality(containerID, slotID)
     local containerItemInfo = C_Container and C_Container.GetContainerItemInfo and C_Container.GetContainerItemInfo(containerID, slotID)
     return containerItemInfo and containerItemInfo.quality or nil
 end
 
+-- Identifies low-quality items that should be marked as junk.
 local function IsJunkContainerItem(containerID, slotID)
     local containerItemInfo = C_Container and C_Container.GetContainerItemInfo and C_Container.GetContainerItemInfo(containerID, slotID)
     return containerItemInfo and containerItemInfo.quality == ITEM_QUALITY_POOR and containerItemInfo.hasNoValue ~= true
 end
 
+-- Decides which bind label a container item should show, if any.
 local function GetContainerBindData(containerID, slotID)
     local itemLocation = ItemLocation:CreateFromBagAndSlot(containerID, slotID)
     local containerItemInfo = C_Container and C_Container.GetContainerItemInfo and C_Container.GetContainerItemInfo(containerID, slotID)
@@ -460,6 +487,7 @@ local function GetContainerBindData(containerID, slotID)
     return nil
 end
 
+-- Shows or hides the item-level label for a button.
 local function UpdateItemLevelOverlay(button, itemLevel, fontSize, yOffset, quality)
     local text = GetOrCreateItemLevelText(button, fontSize, yOffset)
     local background = GetOrCreateOverlayBackground(button, "AngusUIItemLevelBackground")
@@ -477,6 +505,7 @@ local function UpdateItemLevelOverlay(button, itemLevel, fontSize, yOffset, qual
     end
 end
 
+-- Shows or hides the bind-status label for a button.
 local function UpdateBindOverlay(button, label, r, g, b)
     local text = GetOrCreateBindText(button)
     local background = GetOrCreateOverlayBackground(button, "AngusUIBindBackground")
@@ -494,6 +523,7 @@ local function UpdateBindOverlay(button, label, r, g, b)
     end
 end
 
+-- Marks junk items with subdued visuals and an icon.
 local function UpdateJunkOverlay(button, isJunk)
     local icon = GetButtonIcon(button)
     if icon and icon.SetDesaturated then
@@ -511,6 +541,7 @@ local function UpdateJunkOverlay(button, isJunk)
     end
 end
 
+-- Refreshes all overlays for one bag or bank item button.
 local function UpdateContainerButton(button, containerID, slotID)
     HideButtonOverlays(button)
 
@@ -537,6 +568,7 @@ local function UpdateContainerButton(button, containerID, slotID)
     end)
 end
 
+-- Resolves which item an equipment flyout entry represents.
 local function GetFlyoutItem(button)
     if not button or not Item then
         return nil
@@ -601,6 +633,7 @@ local function GetFlyoutItem(button)
     return nil
 end
 
+-- Refreshes overlays for one equipment flyout button.
 local function RefreshFlyoutItemButton(button)
     HideButtonOverlays(button)
 
@@ -618,6 +651,7 @@ local function RefreshFlyoutItemButton(button)
     end)
 end
 
+-- Refreshes overlays for all equipment flyout entries.
 local function RefreshFlyoutItemLevels()
     if not EquipmentFlyoutFrame or not EquipmentFlyoutFrame.buttons then
         HideFlyoutItemOverlays()
@@ -629,6 +663,7 @@ local function RefreshFlyoutItemLevels()
     end
 end
 
+-- Refreshes overlays for one modern bag item button.
 local function RefreshBagItemButton(itemButton)
     if not itemButton or not itemButton.GetBagID or not itemButton.GetID then
         return
@@ -637,6 +672,7 @@ local function RefreshBagItemButton(itemButton)
     UpdateContainerButton(itemButton, itemButton:GetBagID(), itemButton:GetID())
 end
 
+-- Refreshes overlays across all items in a bag frame.
 local function RefreshBagFrameItemLevels(frame)
     if not frame or not frame.EnumerateValidItems then
         return
@@ -647,6 +683,7 @@ local function RefreshBagFrameItemLevels(frame)
     end
 end
 
+-- Refreshes overlays for older bag frame layouts.
 local function RefreshLegacyContainerFrame(container)
     if not container then
         return
@@ -666,6 +703,7 @@ local function RefreshLegacyContainerFrame(container)
     end
 end
 
+-- Refreshes overlays for an older bank item button.
 local function RefreshLegacyBankItemButton(button)
     if not button or button.isBag then
         return
@@ -679,6 +717,7 @@ local function RefreshLegacyBankItemButton(button)
     UpdateContainerButton(button, parent:GetID(), button:GetID())
 end
 
+-- Refreshes bank overlays only when the bank's contents are accessible.
 local function RefreshBankPanel(panel)
     if not panel or not panel.EnumerateValidItems then
         return
@@ -697,6 +736,7 @@ local function RefreshBankPanel(panel)
     end
 end
 
+-- Attaches overlay refreshes to modern bag frame updates.
 local function HookBagFrames()
     if ContainerFrame_Update then
         return
@@ -720,6 +760,7 @@ local function HookBagFrames()
     end
 end
 
+-- Attaches overlay refreshes to a bank panel's item refresh points.
 local function HookBankPanel(panel)
     if not panel or hookedBankPanels[panel] then
         return
@@ -736,6 +777,7 @@ local function HookBankPanel(panel)
     hookedBankPanels[panel] = true
 end
 
+-- Installs all hooks needed to keep item overlays updated.
 local function InstallHooks(self)
     if EquipmentFlyout_UpdateItems and not self.itemOverlayFlyoutHooked then
         hooksecurefunc("EquipmentFlyout_UpdateItems", RefreshFlyoutItemLevels)
@@ -762,10 +804,12 @@ local function InstallHooks(self)
     HookBankPanel(AccountBankPanel)
 end
 
+-- Initializes the item overlay system.
 function AngusUI:ItemOverlays()
     InstallHooks(self)
 end
 
+-- Initializes the custom bank deposit button behavior.
 function AngusUI:BankInit()
     if self.bankDefaultTabHooked or not BankFrame then
         return
