@@ -47,6 +47,14 @@ function frame:ADDON_LOADED(self, addon)
             AngusUI:ItemOverlays()
         end
 
+        local isCharacterUILoaded = (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("Blizzard_CharacterUI")) or CharacterFrame
+        if isCharacterUILoaded then
+            if AngusUI.CharacterInit then
+                AngusUI:CharacterInit()
+            end
+            AngusUI:RefreshCharacterPanel()
+        end
+
         if AngusUI.BankInit then
             AngusUI:BankInit()
         end
