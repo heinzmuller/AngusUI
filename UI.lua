@@ -1,5 +1,13 @@
 local _, AngusUI = ...
 
+local uiWatcher = CreateFrame("Frame")
+
+uiWatcher:RegisterEvent("PLAYER_ENTERING_WORLD")
+uiWatcher:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+uiWatcher:SetScript("OnEvent", function()
+    AngusUI:UI()
+end)
+
 function AngusUI:UI()
     local layouts = C_EditMode.GetLayouts();
     if not layouts or not layouts.layouts then

@@ -3,6 +3,18 @@ local _, AngusUI = ...
 local Inconsolata = "Interface\\AddOns\\AngusUI\\Inconsolata.ttf"
 local TOOLTIP_LINE_GEM_SOCKET = Enum and Enum.TooltipDataLineType and Enum.TooltipDataLineType.GemSocket or 3
 local TOOLTIP_LINE_ITEM_ENCHANTMENT_PERMANENT = Enum and Enum.TooltipDataLineType and Enum.TooltipDataLineType.ItemEnchantmentPermanent or 15
+local characterWatcher
+
+local function RefreshCharacterForInteraction(interactionType)
+    if
+        interactionType ~= Enum.PlayerInteractionType.Banker and
+        interactionType ~= Enum.PlayerInteractionType.AccountBanker
+    then
+        return
+    end
+
+    AngusUI:RefreshCharacterPanel()
+end
 
 local function UpdateItemLevelFrameMaxTextFont(statFrame, text)
     local valueText = statFrame and statFrame.Value
@@ -490,4 +502,29 @@ function AngusUI:CharacterInit()
     end)
 
     self.characterSlotHooked = true
+
+    characterWatcher = characterWatcher or CreateFrame("Frame")
+    characterWatcher:RegisterEvent("PLAYER_ENTERING_WORLD")
+    characterWatcher:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+    characterWatcher:RegisterEvent("UNIT_INVENTORY_CHANGED")
+    characterWatcher:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+    characterWatcher:RegisterEvent("BAG_UPDATE_DELAYED")
+    characterWatcher:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW")
+    characterWatcher:SetScript("OnEvent", function(_, event, ...)
+        if event == "UNIT_INVENTORY_CHANGED" then
+            if ... ~= "player" then
+                return
+            end
+
+            AngusUI:RefreshCharacterPanel()
+            return
+        end
+
+        if event == "PLAYER_INTERACTION_MANAGER_FRAME_SHOW" then
+            RefreshCharacterForInteraction(...)
+            return
+        end
+
+        AngusUI:RefreshCharacterPanel()
+    end)
 end

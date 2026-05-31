@@ -3,6 +3,7 @@ local _, AngusUI = ...
 local rewardCache = {}
 local rewardItemLevelCache = {}
 local slotCache = {}
+local worldQuestIconsWatcher = CreateFrame("Frame")
 local rewardPriority = {
     gear = 3,
     special = 2,
@@ -31,6 +32,24 @@ local worldMapPinTemplates = {
 }
 
 local ShouldShowUpgradeArrow
+
+worldQuestIconsWatcher:RegisterEvent("PLAYER_ENTERING_WORLD")
+worldQuestIconsWatcher:RegisterEvent("BAG_UPDATE_DELAYED")
+worldQuestIconsWatcher:RegisterEvent("UNIT_AURA")
+worldQuestIconsWatcher:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+worldQuestIconsWatcher:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+worldQuestIconsWatcher:RegisterEvent("QUEST_LOG_UPDATE")
+worldQuestIconsWatcher:RegisterEvent("QUEST_ACCEPTED")
+worldQuestIconsWatcher:RegisterEvent("QUEST_REMOVED")
+worldQuestIconsWatcher:RegisterEvent("TASK_PROGRESS_UPDATE")
+worldQuestIconsWatcher:RegisterEvent("QUEST_WATCH_LIST_CHANGED")
+worldQuestIconsWatcher:SetScript("OnEvent", function(_, event, ...)
+    if event == "UNIT_AURA" and ... ~= "player" then
+        return
+    end
+
+    AngusUI:QueueWorldQuestIconsRefresh()
+end)
 
 local function IsWorldQuestRewardsEnabled()
     local settingsDB = AngusUI.GetSettingsDB and AngusUI:GetSettingsDB() or nil

@@ -1,6 +1,12 @@
 local _, AngusUI = ...
 
 local baseSizes = nil
+local friendsFrameWatcher = CreateFrame("Frame")
+
+friendsFrameWatcher:RegisterEvent("PLAYER_ENTERING_WORLD")
+friendsFrameWatcher:SetScript("OnEvent", function()
+    AngusUI:FriendsFrame()
+end)
 
 function AngusUI:FriendsFrame()
     local settingsDB = self.GetSettingsDB and self:GetSettingsDB() or nil

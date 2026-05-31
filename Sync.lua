@@ -2,6 +2,49 @@ local _, AngusUI = ...
 
 -- Keep SYNC.md updated whenever the sync payload in this file changes.
 
+local syncWatcher
+
+local function IsBankerInteraction(interactionType)
+    return (
+        interactionType == Enum.PlayerInteractionType.Banker or
+        interactionType == Enum.PlayerInteractionType.AccountBanker
+    )
+end
+
+local function HandleSyncRefreshEvent(event, ...)
+    if event == "CURRENCY_DISPLAY_UPDATE" then
+        AngusUI:SyncHandleCurrencyUpdate(...)
+        return
+    end
+
+    if event == "ACCOUNT_CHARACTER_CURRENCY_DATA_RECEIVED" or event == "CURRENCY_TRANSFER_LOG_UPDATE" then
+        AngusUI:SyncHandleAccountCurrencyDataUpdate()
+        return
+    end
+
+    if event == "PLAYER_INTERACTION_MANAGER_FRAME_SHOW" then
+        if IsBankerInteraction(...) then
+            AngusUI:SyncRefresh()
+        end
+        return
+    end
+
+    if
+        event == "TRADE_SKILL_SHOW" or
+        event == "TRADE_SKILL_DATA_SOURCE_CHANGED" or
+        event == "TRADE_SKILL_DETAILS_UPDATE"
+    then
+        AngusUI:SyncRefresh(true)
+        return
+    end
+
+    if event == "UNIT_AURA" and ... ~= "player" then
+        return
+    end
+
+    AngusUI:SyncRefresh()
+end
+
 local gildedStashWidgetID = 7591
 local gildedStashCurrencyID = 3290
 local cofferKeyShardsCurrencyID = 3310
@@ -1149,6 +1192,36 @@ function AngusUI:SyncInit()
     self.syncAccountCurrencyRequestPending = false
     self.syncGildedRefreshQueued = false
     self.syncProfessionConcentrationRefreshQueued = false
+
+    syncWatcher = syncWatcher or CreateFrame("Frame")
+    syncWatcher:RegisterEvent("PLAYER_ENTERING_WORLD")
+    syncWatcher:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+    syncWatcher:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+    syncWatcher:RegisterEvent("BAG_UPDATE_DELAYED")
+    syncWatcher:RegisterEvent("QUEST_LOG_UPDATE")
+    syncWatcher:RegisterEvent("QUEST_ACCEPTED")
+    syncWatcher:RegisterEvent("QUEST_REMOVED")
+    syncWatcher:RegisterEvent("TASK_PROGRESS_UPDATE")
+    syncWatcher:RegisterEvent("QUEST_WATCH_LIST_CHANGED")
+    syncWatcher:RegisterEvent("UNIT_AURA")
+    syncWatcher:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
+    syncWatcher:RegisterEvent("ACCOUNT_CHARACTER_CURRENCY_DATA_RECEIVED")
+    syncWatcher:RegisterEvent("CURRENCY_TRANSFER_LOG_UPDATE")
+    syncWatcher:RegisterEvent("ACCOUNT_MONEY")
+    syncWatcher:RegisterEvent("PLAYER_MONEY")
+    syncWatcher:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW")
+    syncWatcher:RegisterEvent("TRADE_SKILL_SHOW")
+    syncWatcher:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
+    syncWatcher:RegisterEvent("TRADE_SKILL_DETAILS_UPDATE")
+    syncWatcher:RegisterEvent("WEEKLY_REWARDS_UPDATE")
+    syncWatcher:RegisterEvent("WEEKLY_REWARDS_ITEM_CHANGED")
+    syncWatcher:RegisterEvent("LFG_UPDATE_RANDOM_INFO")
+    syncWatcher:RegisterEvent("CHALLENGE_MODE_MAPS_UPDATE")
+    syncWatcher:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+    syncWatcher:SetScript("OnEvent", function(_, event, ...)
+        HandleSyncRefreshEvent(event, ...)
+    end)
+
     if C_MythicPlus and C_MythicPlus.RequestMapInfo then
         C_MythicPlus.RequestMapInfo()
     end

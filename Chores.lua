@@ -1,5 +1,7 @@
 local _, AngusUI = ...
 
+local choresWatcher
+
 local toastMinWidth = 420
 local toastSidePadding = 5
 local toastTopPadding = 5
@@ -660,4 +662,28 @@ function AngusUI:ChoresInit()
     self.choresInitialized = true
     self.choresToastShown = false
     self.choresInitialToastPending = false
+
+    choresWatcher = choresWatcher or CreateFrame("Frame")
+    choresWatcher:RegisterEvent("PLAYER_ENTERING_WORLD")
+    choresWatcher:RegisterEvent("LOADING_SCREEN_DISABLED")
+    choresWatcher:SetScript("OnEvent", function(_, event, ...)
+        if event == "PLAYER_ENTERING_WORLD" then
+            local initialLogin, isReloadingUI = ...
+            if initialLogin or isReloadingUI then
+                AngusUI.choresInitialToastPending = true
+            end
+            return
+        end
+
+        if not AngusUI.choresInitialToastPending then
+            return
+        end
+
+        AngusUI.choresInitialToastPending = false
+        if AngusUI.ShowInitialChoresToast then
+            AngusUI:ShowInitialChoresToast()
+        else
+            AngusUI:ShowChoresToast()
+        end
+    end)
 end

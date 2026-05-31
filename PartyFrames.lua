@@ -2,6 +2,12 @@ local _, AngusUI = ...
 
 local defaultPartyLabelText
 local defaultCompactPartyTitleText
+local partyFramesWatcher = CreateFrame("Frame")
+
+partyFramesWatcher:RegisterEvent("PLAYER_ENTERING_WORLD")
+partyFramesWatcher:SetScript("OnEvent", function()
+    AngusUI:PartyFrames()
+end)
 
 local function ShouldHidePartyLabel()
     local settingsDB = AngusUI.GetSettingsDB and AngusUI:GetSettingsDB() or nil

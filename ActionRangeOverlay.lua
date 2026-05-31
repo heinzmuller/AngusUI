@@ -2,6 +2,7 @@ local _, AngusUI = ...
 
 local OVERLAY_ALPHA = 0.42
 local registeredButtons = {}
+local actionRangeOverlayWatcher = CreateFrame("Frame")
 
 local function ActionHasRangeRequirements(action)
     if C_ActionBar and C_ActionBar.HasRangeRequirements then
@@ -156,3 +157,8 @@ function AngusUI:EnableActionRangeOverlay()
         ActionBarButtonEventsFrame:ForEachFrame(RefreshRangeOverlay)
     end)
 end
+
+actionRangeOverlayWatcher:RegisterEvent("PLAYER_ENTERING_WORLD")
+actionRangeOverlayWatcher:SetScript("OnEvent", function()
+    AngusUI:EnableActionRangeOverlay()
+end)

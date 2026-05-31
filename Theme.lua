@@ -3,6 +3,12 @@ local _, AngusUI = ...
 local defaultThemeEnabled = true
 local defaultThemeDarkness = 0.4
 local defaultThemeButtonDarkness = 0.4
+local themeWatcher = CreateFrame("Frame")
+
+themeWatcher:RegisterEvent("PLAYER_ENTERING_WORLD")
+themeWatcher:SetScript("OnEvent", function()
+    AngusUI:ApplyTheme()
+end)
 
 function AngusUI:Theme(forceReset)
     local enabled = defaultThemeEnabled

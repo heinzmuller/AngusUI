@@ -1,6 +1,17 @@
 local _, AngusUI = ...
 
 local Inconsolata = "Interface\\AddOns\\AngusUI\\Inconsolata.ttf"
+local mythicPlusWatcher = CreateFrame("Frame")
+
+mythicPlusWatcher:RegisterEvent("MYTHIC_PLUS_CURRENT_AFFIX_UPDATE")
+mythicPlusWatcher:SetScript("OnEvent", function(self)
+    if ChallengesFrame == nil then
+        return
+    end
+
+    AngusUI:MythicPlus()
+    self:UnregisterEvent("MYTHIC_PLUS_CURRENT_AFFIX_UPDATE")
+end)
 
 local function champion(itemLevel)
     return RARE_BLUE_COLOR:WrapTextInColorCode(itemLevel)
