@@ -14,7 +14,7 @@ local firstWorldBossQuestIDs = {
     92636, -- Predaxas
 }
 local nightmareTaskQuestID = 94446
-local nullingNulleusQuestID = 93525
+local seasonalDelveBossQuestID = 93525
 local seasonalTierSetAchievementID = 61519
 local trovehunterBountyAuraSpellID = 1254631
 local trackedCurrencyIDs = {
@@ -138,7 +138,42 @@ local function IsAchievementComplete(achievementID)
         return false
     end
 
-    return select(14, GetAchievementInfo(achievementID)) == true
+    return select(13, GetAchievementInfo(achievementID)) == true
+end
+
+local function GetOverallMythicPlusScore()
+    if C_PlayerInfo and C_PlayerInfo.GetPlayerMythicPlusRatingSummary then
+        local summary = C_PlayerInfo.GetPlayerMythicPlusRatingSummary("player")
+        if summary and summary.currentSeasonScore then
+            return summary.currentSeasonScore
+        end
+    end
+
+    if C_ChallengeMode and C_ChallengeMode.GetOverallDungeonScore then
+        return C_ChallengeMode.GetOverallDungeonScore() or 0
+    end
+
+    return 0
+end
+
+local function BuildMythicPlusBestRuns()
+    if not C_MythicPlus or not C_MythicPlus.GetRunHistory then
+        return {}
+    end
+
+    local bestRuns = {}
+    local runs = C_MythicPlus.GetRunHistory(true, false, true) or {}
+
+    for _, run in ipairs(runs) do
+        if run.completed and run.mapChallengeModeID and run.level then
+            local existingLevel = bestRuns[run.mapChallengeModeID]
+            if existingLevel == nil or run.level > existingLevel then
+                bestRuns[run.mapChallengeModeID] = run.level
+            end
+        end
+    end
+
+    return bestRuns
 end
 
 local function IsProfessionLearned(spellID)
@@ -565,8 +600,11 @@ function AngusUI:GetSyncCharacterData()
     characterData.currencies = characterData.currencies or {}
     characterData.gold = characterData.gold or 0
     characterData.seasonal = characterData.seasonal or {}
-    characterData.seasonal.quests = characterData.seasonal.quests or {}
-    characterData.seasonal.achievements = characterData.seasonal.achievements or {}
+    characterData.seasonal.fourSet = characterData.seasonal.fourSet == true
+    characterData.seasonal.delveBoss = characterData.seasonal.delveBoss == true
+    characterData.seasonal.mythicPlus = characterData.seasonal.mythicPlus or {}
+    characterData.seasonal.mythicPlus.score = characterData.seasonal.mythicPlus.score or 0
+    characterData.seasonal.mythicPlus.bests = characterData.seasonal.mythicPlus.bests or {}
     characterData.weeklies = characterData.weeklies or {}
 
     return characterData
@@ -726,17 +764,13 @@ end
 
 function AngusUI:UpdateSyncCharacterSeasonalData(characterData)
     local seasonalData = {
-        quests = {},
-        achievements = {},
+        fourSet = IsAchievementComplete(seasonalTierSetAchievementID),
+        delveBoss = IsQuestComplete(seasonalDelveBossQuestID),
+        mythicPlus = {
+            score = GetOverallMythicPlusScore(),
+            bests = BuildMythicPlusBestRuns(),
+        },
     }
-
-    if IsQuestComplete(nullingNulleusQuestID) then
-        table.insert(seasonalData.quests, nullingNulleusQuestID)
-    end
-
-    if IsAchievementComplete(seasonalTierSetAchievementID) then
-        table.insert(seasonalData.achievements, seasonalTierSetAchievementID)
-    end
 
     if AreTablesEqual(characterData.seasonal, seasonalData) then
         return false
@@ -982,8 +1016,11 @@ function AngusUI:UpdateSyncCharacterData(includeProfessionConcentration)
     characterData.currencies = characterData.currencies or {}
     characterData.gold = characterData.gold or 0
     characterData.seasonal = characterData.seasonal or {}
-    characterData.seasonal.quests = characterData.seasonal.quests or {}
-    characterData.seasonal.achievements = characterData.seasonal.achievements or {}
+    characterData.seasonal.fourSet = characterData.seasonal.fourSet == true
+    characterData.seasonal.delveBoss = characterData.seasonal.delveBoss == true
+    characterData.seasonal.mythicPlus = characterData.seasonal.mythicPlus or {}
+    characterData.seasonal.mythicPlus.score = characterData.seasonal.mythicPlus.score or 0
+    characterData.seasonal.mythicPlus.bests = characterData.seasonal.mythicPlus.bests or {}
     characterData.weeklies = characterData.weeklies or {}
 
     changed = self:UpdateSyncCharacterDelvesData(characterData) or changed
@@ -1112,5 +1149,8 @@ function AngusUI:SyncInit()
     self.syncAccountCurrencyRequestPending = false
     self.syncGildedRefreshQueued = false
     self.syncProfessionConcentrationRefreshQueued = false
+    if C_MythicPlus and C_MythicPlus.RequestMapInfo then
+        C_MythicPlus.RequestMapInfo()
+    end
     self:GetSyncDB()
 end

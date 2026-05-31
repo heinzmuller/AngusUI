@@ -69,11 +69,13 @@ The goals for this structure are:
   repainting the warband bank in external consumers.
 - Treat `weeklies` as the list of tracked active weekly quest IDs completed by that
   character this reset.
-- Treat `seasonal.quests` and `seasonal.achievements` as the per-character lists
-  of completed tracked seasonal IDs for that character.
-  Achievement IDs in `seasonal.achievements` should only be present when the
-  achievement was earned by that specific character, not merely completed
-  somewhere on the account.
+- Treat `seasonal.fourSet` as a per-character boolean derived from a
+  character-earned achievement check, not account-wide achievement completion.
+- Treat `seasonal.delveBoss` as a per-character boolean for the tracked
+  seasonal delve-boss completion flag.
+- Treat `seasonal.mythicPlus.score` as the character's current Mythic+ rating.
+- Treat `seasonal.mythicPlus.bests` as `mapChallengeModeID -> highest completed
+  keystone level` for the current character.
 - Treat `professions` as a sparse map of learned professions only.
 - Treat `professions[professionName].skillLevel` as the character's current skill
   rank for that learned profession snapshot.
@@ -180,8 +182,12 @@ AngusUICharacterSyncDB = {
     },
     gold = 0,
     seasonal = {
-        quests = {},
-        achievements = {},
+        fourSet = false,
+        delveBoss = false,
+        mythicPlus = {
+            score = 0,
+            bests = {},
+        },
     },
     weeklies = {
         57637,
@@ -282,8 +288,12 @@ AngusUICharacterSyncDB = {
     },
     gold = 0,
     seasonal = {
-        quests = {},
-        achievements = {},
+        fourSet = false,
+        delveBoss = false,
+        mythicPlus = {
+            score = 0,
+            bests = {},
+        },
     },
     weeklies = {},
 }
@@ -350,10 +360,16 @@ AngusUICharacterSyncDB = {
     },
     gold = 9876543,
     seasonal = {
-        quests = {
-            93525,
+        fourSet = false,
+        delveBoss = true,
+        mythicPlus = {
+            score = 1734.2,
+            bests = {
+                [503] = 7,
+                [507] = 6,
+                [525] = 8,
+            },
         },
-        achievements = {},
     },
     weeklies = {
         57637,
@@ -422,11 +438,16 @@ AngusUICharacterSyncDB = {
     },
     gold = 5432100,
     seasonal = {
-        quests = {
-            93525,
-        },
-        achievements = {
-            61519,
+        fourSet = true,
+        delveBoss = true,
+        mythicPlus = {
+            score = 3021.7,
+            bests = {
+                [503] = 12,
+                [507] = 11,
+                [525] = 13,
+                [542] = 10,
+            },
         },
     },
     weeklies = {
@@ -468,10 +489,12 @@ AngusUICharacterSyncDB = {
 - `currencies` stores tracked currency snapshots as `currencyID = count`.
 - `gold` stores the character's current on-hand gold value in copper; divide by
   `10000` to display gold.
-- `seasonal.quests` and `seasonal.achievements` store only the completed tracked
-  per-character seasonal IDs for external consumers.
-- `seasonal.achievements` should follow the same character-earned rule as the
-  addon's crest achievement checks, using the live achievement API's
-  character-earned signal rather than account-wide completion.
+- `seasonal.fourSet` uses the live achievement API's character-earned signal,
+  not account-wide achievement completion.
+- `seasonal.delveBoss` stores the tracked per-character seasonal delve-boss
+  completion flag as a boolean.
+- `seasonal.mythicPlus.score` stores the character's current Mythic+ rating.
+- `seasonal.mythicPlus.bests[mapChallengeModeID]` stores the highest completed
+  keystone level seen for that dungeon on the current character.
 - `lastChanged` and timestamps are examples only.
 - This document should be updated whenever the sync contract changes.

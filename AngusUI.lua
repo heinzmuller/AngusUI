@@ -32,6 +32,8 @@ frame:RegisterEvent("TRADE_SKILL_DETAILS_UPDATE")
 frame:RegisterEvent("WEEKLY_REWARDS_UPDATE")
 frame:RegisterEvent("WEEKLY_REWARDS_ITEM_CHANGED")
 frame:RegisterEvent("LFG_UPDATE_RANDOM_INFO")
+frame:RegisterEvent("CHALLENGE_MODE_MAPS_UPDATE")
+frame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 
 local function Set(list)
     local set = {}
@@ -244,6 +246,12 @@ frame:SetScript(
         end
 
         if (event == "LFG_UPDATE_RANDOM_INFO") then
+            if AngusUI.SyncRefresh then
+                AngusUI:SyncRefresh()
+            end
+        end
+
+        if (event == "CHALLENGE_MODE_MAPS_UPDATE") or (event == "CHALLENGE_MODE_COMPLETED") then
             if AngusUI.SyncRefresh then
                 AngusUI:SyncRefresh()
             end
