@@ -4,7 +4,7 @@ local _, AngusUI = ...
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
 
-local ADDON_NAME = "|cff0f7a0fAngus|cff7be426UI|r"
+local ADDON_NAME = "|cff0f7a0fa|cff7be426UI|r"
 local PRINT_PREFIX = "|cff000000[|r" .. ADDON_NAME .. "|cff000000]|r"
 
 -- Prints addon messages with a consistent AngusUI prefix.
@@ -109,10 +109,6 @@ function frame:ADDON_LOADED(self, addon)
         if AngusUI.MailInit then
             AngusUI:MailInit()
         end
-    end
-
-    if (addon == "Blizzard_PlayerSpells") then
-        AngusUI:TalentRecommendationsRefresh()
     end
 
     if (addon == "Blizzard_ProfessionsTemplates") or (addon == "Blizzard_Professions") then

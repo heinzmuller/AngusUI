@@ -20,7 +20,6 @@ Modules\FriendsFrame.lua
 Modules\MythicPlus.lua
 Modules\PartyFrames.lua
 Modules\Settings.lua
-Modules\TalentRecommendations.lua
 Modules\ProfessionLinks.lua
 Modules\Theme.lua
 Modules\TeleportBack.lua

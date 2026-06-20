@@ -113,7 +113,7 @@ local function printTrackedQuests()
         local completed = C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted and C_QuestLog.IsQuestFlaggedCompleted(quest.id) or false
         local title = C_QuestLog and C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(quest.id)
 
-        print(colorizeCompletion((title or quest.fallbackName) .. " (Quest)", completed))
+        AngusUI:Print(colorizeCompletion((title or quest.fallbackName) .. " (Quest)", completed))
     end
 end
 
@@ -151,17 +151,17 @@ function AngusUI:Crests()
             return
         end
         
-        print(colorizeCompletion(name .. " (" .. achievement.display .. ")", wasEarnedByMe))
+        AngusUI:Print(colorizeCompletion(name .. " (" .. achievement.display .. ")", wasEarnedByMe))
 
         if wasEarnedByMe == false then
             if highestAccountAchievementDisplay > 0 then
-                print("Account crest discount through " .. highestAccountAchievementDisplay .. " (50%)")
+                AngusUI:Print("Account crest discount through " .. highestAccountAchievementDisplay .. " (50%)")
             end
 
             if achievement.mode == "average" then
                 local overallItemLevel, equippedItemLevel = GetAverageItemLevel()
                 local currentItemLevel = equippedItemLevel or overallItemLevel or 0
-                print(string.format("%.1f / %d average item level", currentItemLevel, achievement.display))
+                AngusUI:Print(string.format("%.1f / %d average item level", currentItemLevel, achievement.display))
                 return
             end
 
@@ -302,14 +302,14 @@ function AngusUI:Crests()
                 local crestText = formatCrestCosts(requirement.costs, requirement.total)
 
                 if requirement.itemLevel then
-                    print(requirement.itemLevel, requirement.label, "-", crestText)
+                    AngusUI:Print(requirement.itemLevel, requirement.label, "-", crestText)
                 else
-                    print(requirement.label, "-", crestText)
+                    AngusUI:Print(requirement.label, "-", crestText)
                 end
             end
 
             if totalCrests > 0 then
-                print("Total - " .. formatCrestCosts(totalCosts, totalCrests))
+                AngusUI:Print("Total - " .. formatCrestCosts(totalCosts, totalCrests))
             end
 
             return
